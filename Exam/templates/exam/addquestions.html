@@ -1,34 +1,92 @@
 {% extends 'base_faculty.html' %}
 
 {% block body %}
-    <div class="mt-5">
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm" style="border-color: #745959;">
+                <div class="card-header text-center" style="background-color: #87ff9b; color: #745959;">
+                    <h4 class="mb-0">Add New Question</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'faculty-addquestions' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ examform.question.id_for_label }}" class="form-label">Question</label>
+                            <textarea name="{{ examform.question.name }}" id="{{ examform.question.id_for_label }}" class="form-control" rows="4" placeholder="Enter the question here..." required style="border-color: #745959; color: #745959;">{{ examform.question.value|default_if_none:'' }}</textarea>
+                            {% if examform.question.errors %}
+                                <div class="text-danger">{{ examform.question.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <input type="text" name="{{ examform.optionA.name }}" id="{{ examform.optionA.id_for_label }}" class="form-control" placeholder="Option A" value="{{ examform.optionA.value|default_if_none:'' }}" required style="border-color: #745959; color: #745959;">
+                                {% if examform.optionA.errors %}
+                                    <div class="text-danger">{{ examform.optionA.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <input type="text" name="{{ examform.optionB.name }}" id="{{ examform.optionB.id_for_label }}" class="form-control" placeholder="Option B" value="{{ examform.optionB.value|default_if_none:'' }}" required style="border-color: #745959; color: #745959;">
+                                {% if examform.optionB.errors %}
+                                    <div class="text-danger">{{ examform.optionB.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <input type="text" name="{{ examform.optionC.name }}" id="{{ examform.optionC.id_for_label }}" class="form-control" placeholder="Option C" value="{{ examform.optionC.value|default_if_none:'' }}" required style="border-color: #745959; color: #745959;">
+                                {% if examform.optionC.errors %}
+                                    <div class="text-danger">{{ examform.optionC.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <input type="text" name="{{ examform.optionD.name }}" id="{{ examform.optionD.id_for_label }}" class="form-control" placeholder="Option D" value="{{ examform.optionD.value|default_if_none:'' }}" required style="border-color: #745959; color: #745959;">
+                                {% if examform.optionD.errors %}
+                                    <div class="text-danger">{{ examform.optionD.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <select name="{{ examform.answer.name }}" id="{{ examform.answer.id_for_label }}" class="form-select" required style="border-color: #745959; color: #745959;">
+                                <option value="">Select the correct answer</option>
+                                <option value="A" {% if examform.answer.value == 'A' %}selected{% endif %}>A</option>
+                                <option value="B" {% if examform.answer.value == 'B' %}selected{% endif %}>B</option>
+                                <option value="C" {% if examform.answer.value == 'C' %}selected{% endif %}>C</option>
+                                <option value="D" {% if examform.answer.value == 'D' %}selected{% endif %}>D</option>
+                            </select>
+                            {% if examform.answer.errors %}
+                                <div class="text-danger">{{ examform.answer.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ examform.max_marks.id_for_label }}" class="form-label">Maximum Marks</label>
+                            <input type="number" name="{{ examform.max_marks.name }}" id="{{ examform.max_marks.id_for_label }}" class="form-control" placeholder="e.g., 1" value="{{ examform.max_marks.value|default_if_none:'' }}" min="0" max="100" required style="border-color: #745959; color: #745959;">
+                            {% if examform.max_marks.errors %}
+                                <div class="text-danger">{{ examform.max_marks.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-lg" style="border-color: #745959; color: #745959; background-color: transparent;">Add Question</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-<style>
-*{
-  color: #745959;
-}
-button[type=submit]:hover{
-        background: #87FF9B;
-    }
-    #id_questions{display:block;width:100%;height:calc(10em);padding:.375rem .75rem;font-size:1rem;font-weight:400;line-height:1.5;color:#745959;background-color:#fff;background-clip:padding-box;border:1px solid #745959;border-radius:.25rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out}
-</style>
-<div class="row">
-	<div class="col-md-2"></div>
-    <div class="col-md-6">
-        <div class="ml-5 card">
-            <form method="POST" action="{% url 'faculty-addquestions' %}">
-                <div class="container">
-                    {% csrf_token %}
-                    {{examform.as_p}}
-                </div>
-                <div class="text-center">
-                <button class= "btn" style="border-color:#745959; color:#745959;"type="submit">Submit</button>
-                </div>
-            </form>
-        </div>
-        </div>
 </div>
 
+<style>
+* {
+    color: #745959;
+}
+button[type=submit]:hover {
+    background: #87FF9B !important;
+    color: #745959 !important;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #745959;
+    box-shadow: 0 0 0 0.2rem rgba(116, 89, 89, 0.25);
+}
+</style>
 
 {% endblock %}
