@@ -19,16 +19,16 @@ class Question_DB(models.Model):
 
 
 class QForm(ModelForm):
+    answer = forms.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')], widget=forms.Select(attrs={'class': 'form-select'}))
     class Meta:
         model = Question_DB
         fields = '__all__'
         exclude = ['qno', 'professor']
         widgets = {
-            'question': forms.TextInput(attrs = {'class':'form-control'}),
+            'question': forms.Textarea(attrs = {'class':'form-control', 'rows': 4}),
             'optionA': forms.TextInput(attrs = {'class':'form-control'}),
             'optionB': forms.TextInput(attrs = {'class':'form-control'}),
             'optionC': forms.TextInput(attrs = {'class':'form-control'}),
             'optionD': forms.TextInput(attrs = {'class':'form-control'}),
-            'answer': forms.TextInput(attrs = {'class':'form-control'}),
             'max_marks': forms.NumberInput(attrs = {'class':'form-control'}),
         }
