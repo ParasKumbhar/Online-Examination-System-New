@@ -1,0 +1,53 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "harbhajan2109",
+      "name": "harbhajan2109",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56828657?v=4",
+      "profile": "https://github.com/harbhajan2109",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Hritwik-Bhardwaj",
+      "name": "Hritwik Bhardwaj",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46474138?v=4",
+      "profile": "https://github.com/Hritwik-Bhardwaj",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "abhishekkumar29",
+      "name": "abhishekkumar29",
+      "avatar_url": "https://avatars.githubusercontent.com/u/83762781?v=4",
+      "profile": "https://github.com/abhishekkumar29",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "anthonyaniah",
+      "name": "Anthony Aniah Abuokwen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20371468?v=4",
+      "profile": "https://github.com",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "Online-Examination-System",
+  "projectOwner": "Mohitkumar6122",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true,
+  "commitType": "docs",
+  "commitConvention": "angular"
+}
