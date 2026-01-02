@@ -1,34 +1,108 @@
 {% extends 'base_faculty.html' %}
 
 {% block body %}
-    <div class="mt-5">
-    </div>
+<div class="container mt-5">
+    <div class="row">
 
-<style>
-    *{
-      color:#745959;
-    }
-    #id_question_paper{display:block;width:100%;height:calc(1.5em + .75rem + 2px);padding:.375rem .75rem;font-size:1rem;font-weight:400;line-height:1.5;color:#745959;background-color:#fff;background-clip:padding-box;border:1px solid #ced4da;border-radius:.25rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out}
-    button[type=submit]:hover{
-            background: #87FF9B;
-        }
-</style>
-<div class="row">
-	<div class="col-md-2"></div>
-    <div class="col-md-6">
-        <div class="ml-5 card">
-            <form method="POST" action="{% url 'view_exams' %}">
-                <div class="container">
-                    {% csrf_token %}
-                    {{examform.as_p}}
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4" style="border-color:#745959;">
+                <div class="card-header text-center" style="background:#87FF9B;">
+                    <h4>Your Exams</h4>
                 </div>
-                <div class="text-center">
-                <button class= "btn"type="submit" style="border-color:#745959; color:#745959;">Submit</button>
+
+                <div class="card-body">
+                    {% if exams %}
+                        <div class="row">
+                            {% for exam in exams %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100" style="border-color:#745959;">
+                                        <div class="card-body">
+                                            <h5>{{ exam.name }}</h5>
+                                            <p>
+                                                <strong>Total Marks:</strong> {{ exam.total_marks }}<br>
+                                                <strong>Question Paper:</strong> {{ exam.question_paper.qPaperTitle }}<br>
+                                                <strong>Start:</strong> {{ exam.start_time|date:"M d, Y H:i" }}<br>
+                                                <strong>End:</strong> {{ exam.end_time|date:"M d, Y H:i" }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center">No exams created yet.</p>
+                    {% endif %}
                 </div>
-            </form>
+            </div>
         </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm" style="border-color:#745959;">
+                <div class="card-header text-center" style="background:#87FF9B;">
+                    <h4>Create New Exam</h4>
+                </div>
+
+                <div class="card-body">
+                    <form method="POST" action="{% url 'view_exams' %}">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label>Exam Name</label>
+                            {{ examform.name }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Total Marks</label>
+                            {{ examform.total_marks }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Question Paper</label>
+                            {{ examform.question_paper }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Start Time</label>
+                            <input type="datetime-local"
+                                   name="start_time"
+                                   value="{{ examform.start_time.value|default:'' }}"
+                                   class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label>End Time</label>
+                            <input type="datetime-local"
+                                   name="end_time"
+                                   value="{{ examform.end_time.value|default:'' }}"
+                                   class="form-control">
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-lg" style="border-color:#745959;">
+                                Create Exam
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
+
+    </div>
 </div>
 
+<style>
+* { color:#745959; }
 
+button[type=submit]:hover {
+    background:#87FF9B;
+}
+
+.form-control, select {
+    border-color:#745959;
+}
+
+.form-control:focus, select:focus {
+    box-shadow:0 0 0 0.2rem rgba(116,89,89,.25);
+}
+</style>
 {% endblock %}
