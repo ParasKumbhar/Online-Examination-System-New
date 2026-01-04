@@ -1,144 +1,209 @@
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Faculty Dashboard</title>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-*{
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    text-decoration: none;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
 
+/* TOGGLE BUTTON */
+.sidebar-toggle {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  background: #0f9d58;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 1200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
 
-  .sidebar{
-    border-radius: 0.5em;
-    position: fixed;
-    top: 5em;
-    left: -17em;
-    width: 18em;
-    height: 100%;
-    background: white;
-    transition: all .5s ease;
-  }
+/* SIDEBAR */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -270px;
+  width: 270px;
+  height: 100vh;
+  background: linear-gradient(180deg, #0f9d58, #1dbf73);
+  color: #fff;
+  transition: left 0.35s ease;
+  z-index: 1100;
+  box-shadow: 4px 0 18px rgba(0,0,0,0.3);
+}
 
-  .sidebar header{
-    font-size: 2em;
-    color: #745959;
-    text-align: center;
-    line-height: 2em;
-    background: none;
-    user-select: none;
-  }
+.sidebar.active {
+  left: 0;
+}
 
-  .sidebar ul a{
-    color: #745959;
-  }
+/* HEADER */
+.sidebar-header {
+  padding: 22px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  background: rgba(0,0,0,0.15);
+}
 
-  .sidebar li{
-    display: block;
-    /* height: 100%; */
-    width: 100%;
-    line-height: 2em;
-    font-size: 1.5em;
-    color: #745959;
-    padding-left: 1.5em;
-    box-sizing: border-box;
-    border-top: 0.1em solid rgba(116, 89, 89,0.1);
-  }
+/* MENU */
+.sidebar-menu {
+  list-style: none;
+}
 
-  ul li:hover a{
-    padding-left: 1em;
-    transition: 0.6s;
-  }
+.sidebar-menu li a {
+  display: block;
+  padding: 14px 22px;
+  color: #f2f2f2;
+  text-decoration: none;
+  transition: background 0.25s ease;
+}
 
-  .sidebar ul a i {
-    margin-right: 10em;
-  }
+.sidebar-menu li a:hover {
+  background: rgba(255,255,255,0.15);
+}
 
-  #check{
-    display:none;
-  }
+/* HEADINGS */
+.menu-heading {
+  padding: 14px 22px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+}
 
-  label #btn, label #cancel{
-    position: absolute;
-    cursor: pointer;
-    border-radius: 0.1em;
-  }
+.menu-heading:hover {
+  background: rgba(255,255,255,0.12);
+}
 
-  label #btn{
-    left: 1em;
-    top: 2.1em;
-    font-size: 2.5em;
-    color: #87ff9b;
-    padding: 0.2em;
-    border: #bdaf7b;
-    transition: all 0.5s;
-  }
+.menu-heading .arrow {
+  transition: transform 0.3s ease;
+}
 
-  label #cancel{
-    z-index: 1111;
-    left: -5.5em;
-    top: 2.1em;
-    font-size: 2.5em;
-    color: #87ff9b;
-    padding: 0.2em;
-    transition: all 0.5s ease;
-  }
+.menu-heading.active .arrow {
+  transform: rotate(180deg);
+}
 
-  #check:checked ~ .sidebar{
-    left: 0;
-  }
+/* SUBMENU */
+.submenu {
+  display: none;
+  background: rgba(0,0,0,0.12);
+}
 
-  #check:checked ~ label #btn{
-    left: 2em;
-    opacity: 0;
-    pointer-events: none;
-  }
+.submenu li a {
+  padding-left: 42px;
+  font-size: 14px;
+}
 
-  #check:checked ~ label #cancel{
-    left: 5.5em;
-  }
+/* LOGOUT */
+.logout-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: #e53935;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
 
-  #check:checked ~ section{
-    margin-left: 20em;
-  }
+.logout-btn:hover {
+  background: #c62828;
+}
 
-  section{
-    padding: 2em 5em 5em 2em;
-    transition: all 0.5s ease;
-  }
-
+/* CONTENT */
+.content {
+  padding: 80px 30px;
+}
 </style>
-<input type="checkbox" id="check">
-<label for="check">
-  <i class="fas fa-bars" id="btn"></i>
-  <i class="fas fa-times" id="cancel"></i>
-</label>
-<div class="sidebar">
-  <header>
-    Dashboard
-  </header>
-  <ul>
-    <ul>
-      <li><a href="{% url 'faculty-index' %}">Index</a></li>
-    </ul>
-    <li><i class="fas fa-file-alt"></i>  Create New Exams</li>
-    <ul>
+</head>
+
+<body>
+
+<!-- TOGGLE -->
+<div class="sidebar-toggle" id="sidebarToggle">
+  <i class="fas fa-bars"></i>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">Dashboard</div>
+
+  <ul class="sidebar-menu">
+    <li>
+      <a href="{% url 'faculty-index' %}">
+        <i class="fas fa-home"></i> Index
+      </a>
+    </li>
+
+    <li class="menu-heading">
+      <span><i class="fas fa-file-alt"></i> Create New Exams</span>
+      <i class="fas fa-chevron-down arrow"></i>
+    </li>
+    <ul class="submenu">
       <li><a href="{% url 'view_exams' %}">New Main Exam</a></li>
       <li><a href="{% url 'faculty-add_question_paper' %}">New Question Paper</a></li>
       <li><a href="{% url 'faculty-addquestions' %}">New Questions</a></li>
     </ul>
-    <li><i class="fas fa-clipboard-list"></i>  Summary</a></li>
-    <ul>
-      <li><a href="{% url 'faculty-previous' %}">View Previous Exams</a></li>
+
+    <li class="menu-heading">
+      <span><i class="fas fa-clipboard-list"></i> Summary</span>
+      <i class="fas fa-chevron-down arrow"></i>
+    </li>
+    <ul class="submenu">
+      <li><a href="{% url 'faculty-previous' %}">Previous Exams</a></li>
       <li><a href="{% url 'faculty-student' %}">Students</a></li>
       <li><a href="{% url 'faculty-result' %}">Results</a></li>
     </ul>
-    <li><i class="fas fa-clipboard-list"></i>  Actions</a></li>
-    <ul>
-      <form id="my_form" action="{% url 'faculty-logout' %}" method="POST">
-         {% csrf_token %}
-        <li><a href="javascript:{}" onclick="document.getElementById('my_form').submit();">Logout</a></li>
-      </form>
+
+    <li class="menu-heading">
+      <span><i class="fas fa-cog"></i> Actions</span>
+      <i class="fas fa-chevron-down arrow"></i>
+    </li>
+    <ul class="submenu">
+      <li>
+        <form action="{% url 'faculty-logout' %}" method="POST">
+          {% csrf_token %}
+          <button type="submit" class="logout-btn">Logout</button>
+        </form>
+      </li>
     </ul>
   </ul>
-</div>
+</aside>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const sidebar = document.getElementById("sidebar");
+  const toggle = document.getElementById("sidebarToggle");
+  const headings = document.querySelectorAll(".menu-heading");
+
+  toggle.addEventListener("click", () => {
+    sidebar.classList.toggle("active");
+    toggle.innerHTML = sidebar.classList.contains("active")
+      ? '<i class="fas fa-times"></i>'
+      : '<i class="fas fa-bars"></i>';
+  });
+
+  headings.forEach(h => {
+    h.addEventListener("click", () => {
+      h.classList.toggle("active");
+      const submenu = h.nextElementSibling;
+      submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+    });
+  });
+});
+</script>
+
+</body>
+</html>
