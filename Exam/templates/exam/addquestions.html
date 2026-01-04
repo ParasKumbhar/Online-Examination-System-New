@@ -8,7 +8,7 @@
                 <div class="card-header text-center" style="background-color: #87ff9b; color: #745959;">
                     <h4 class="mb-0">Add New Question</h4>
                 </div>
-                <div class="card-body text-center">
+                <div class="card-body text-left">
                     <form method="POST" action="{% url 'faculty-addquestions' %}">
                         {% csrf_token %}
                         <div class="mb-3">
@@ -95,7 +95,7 @@ button[type=submit]:hover {
 #id_answer {
     display: block;
     width: 100%;
-    height: calc(10em);
+    height: calc(2.5em);
     padding: .375rem .75rem;
     font-size: 1rem;
     font-weight: 400;
