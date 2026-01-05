@@ -1,14 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 # Create your models here.
 
 # https://workik.com/django-code-generator
 
-class Programme(models.Model):
-    name = models.CharField(max_length=50)
 class Department(models.Model):
     name = models.CharField(max_length=50)
+
+class Programme(models.Model):
+    name = models.CharField(max_length=50)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
 
 class Nationality(models.Model):
     name = models.CharField(max_length=50)

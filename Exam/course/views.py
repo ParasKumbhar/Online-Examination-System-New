@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect
 from django.views.generic import ListView
-from .models import Course, CourseRegistration, Student, Grade
+from .models import Course, CourseRegistration, Student, Grade, Session
 
 def course_registration(request):
     if request.method == 'POST':

@@ -5,8 +5,14 @@ from admission.models import *
 from course.models import *
 # Create your models here.
 
+class Program(models.Model):
+    name = models.CharField(max_length=250)
+    department = models.ForeignKey('admission.Department', on_delete=models.CASCADE)
+
 class Student(models.Model):
     name = models.CharField(max_length=250)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE)
+    year = models.IntegerField()
     # Add other student-related fields
 
 class Course(models.Model):

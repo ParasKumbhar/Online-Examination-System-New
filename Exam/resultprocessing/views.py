@@ -1,7 +1,9 @@
 from django.shortcuts import render
+import datetime
 
 # Create your views here.
-from .models import Student, Score, Program, ConfigMarks
+from admission.models import Student, Programme as Program
+from .models import Score, ConfigMarks
 
 def calculate_gpa(scores):
     total_credit_units = 0
@@ -151,7 +153,8 @@ def calculate_gpa(scores):
 # FINAL YEAR RESULT
 def final_year_result_sheet(request, program_id):
     program = Program.objects.get(id=program_id)
-    final_year_students = Student.objects.filter(program=program, year=final_year)
+    final_year = datetime.date.today().year
+    final_year_students = Student.objects.filter(admitted_programme=program, graduation_year=final_year)
 
     final_year_results = []
     for student in final_year_students:

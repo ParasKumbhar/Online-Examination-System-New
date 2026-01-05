@@ -30,7 +30,7 @@ The Online Examination System is a digital platform designed to simplify the exa
 
 1. **Clone the Project**
     ```bash
-    git clone https://github.com/Mohitkumar6122/Online-Examination-System.git
+    git clone 
     cd Exam-Portal
     ```
 
@@ -96,27 +96,3 @@ The Online Examination System is a digital platform designed to simplify the exa
 
 9. **Professor Verification**
     - Admins need to manually add professors to the "Professor" group once they create a new account.
-
-## Contributors ✨
-
-Thanks to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/harbhajan2109"><img src="https://avatars.githubusercontent.com/u/56828657?v=4?s=100" width="100px;" alt="harbhajan2109"/><br /><sub><b>harbhajan2109</b></sub></a><br /><a href="https://github.com/Mohitkumar6122/Online-Examination-System/commits?author=harbhajan2109" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Hritwik-Bhardwaj"><img src="https://avatars.githubusercontent.com/u/46474138?v=4?s=100" width="100px;" alt="Hritwik Bhardwaj"/><br /><sub><b>Hritwik Bhardwaj</b></sub></a><br /><a href="https://github.com/Mohitkumar6122/Online-Examination-System/commits?author=Hritwik-Bhardwaj" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abhishekkumar29"><img src="https://avatars.githubusercontent.com/u/83762781?v=4?s=100" width="100px;" alt="abhishekkumar29"/><br /><sub><b>abhishekkumar29</b></sub></a><br /><a href="https://github.com/Mohitkumar6122/Online-Examination-System/commits?author=abhishekkumar29" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com"><img src="https://avatars.githubusercontent.com/u/20371468?v=4?s=100" width="100px;" alt="Anthony Aniah Abuokwen"/><br /><sub><b>Anthony Aniah Abuokwen</b></sub></a><br /><a href="https://github.com/Mohitkumar6122/Online-Examination-System/commits?author=anthonyaniah" title="Code">💻</a></td>
-    </tr>
-  </tbody>
-</table>
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind are welcome!
