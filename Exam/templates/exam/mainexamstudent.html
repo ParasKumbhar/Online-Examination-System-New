@@ -28,7 +28,7 @@
                                 <li class="list-group-item text-center">Question Paper - {{exam.question_paper.qPaperTitle}}</li>
                             </ul>
                             <div class="card-body text-center">
-                                <a onclick = window.open("{% url 'appear-exam' exam.id  %}","","width=800,height=800") target="_blank" class="btn btn-outline-danger">Appear</a>
+                                <a href="{% url 'appear-exam' exam.id %}"onclick="window.open(this.href, '_blank', 'width=800,height=800'); return false;"class="btn btn-outline-danger">Appear</a>
                             </div>
                         </div>
                     {% endfor %}

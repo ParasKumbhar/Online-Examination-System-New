@@ -1,7 +1,8 @@
 from django.shortcuts import render
 
 # Create your views here.
-from .models import StudentWallet, WalletTransaction
+from .models import StudentWallet, WalletTransaction, ResultApproval, LibraryBook, StudentInvolvement
+from admission.models import Student
 
 def save_money(request, student_id, amount):
     student_wallet = StudentWallet.objects.get(student_id=student_id)
