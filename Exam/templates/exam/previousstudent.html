@@ -1,96 +1,51 @@
 {% extends 'base.html' %}
-{% block title %}Previous Exams{% endblock %}
+{% block title %}Previous Exams - ExamPro{% endblock %}
 
 {% block content %}
-
-<div class="page-header">
-    <h1>Previous Exams</h1>
-    <p class="subtitle">View your completed examinations and results</p>
-</div>
-
-<div class="table-card">
-    {% if completed %}
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Exam Name</th>
-                <th>Question Paper</th>
-                <th>Professor</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for exam in completed %}
-            <tr>
-                <td>{{ exam.name }}</td>
-                <td>{{ exam.question_paper.qPaperTitle }}</td>
-                <td>{{ exam.professor }}</td>
-                <td>
-                    <a href="{% url 'result' exam.id %}" class="btn primary small">View Result</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state">
-        <i class="fa-solid fa-history"></i>
-        <p>No completed exams</p>
+<div class="space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Previous Exams</h1>
+        <p class="text-slate-500">View your completed examinations and results</p>
     </div>
-    {% endif %}
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        {% if completed %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-4">Exam Name</th>
+                        <th class="px-6 py-4">Question Paper</th>
+                        <th class="px-6 py-4">Professor</th>
+                        <th class="px-6 py-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for exam in completed %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ exam.question_paper.qPaperTitle }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ exam.professor }}</td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'result' exam.id %}" 
+                               class="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-sm font-medium transition-colors">
+                                View Result
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-12 text-center text-slate-500">
+            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-slate-400">
+                <i class="fa-solid fa-history"></i>
+            </div>
+            <p>No completed exams found.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
-
-<style>
-.table-card {
-    background: var(--bg-card);
-    padding: 22px;
-    border-radius: 18px;
-    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table th {
-    text-align: left;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    padding-bottom: 12px;
-}
-
-.data-table td {
-    padding: 14px 0;
-    border-top: 1px solid var(--border);
-    font-size: 14px;
-}
-
-.btn.small {
-    padding: 8px 12px;
-    font-size: 12px;
-    border-radius: 8px;
-}
-
-.btn.primary {
-    background: var(--accent);
-    color: #fff;
-    text-decoration: none;
-    display: inline-block;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-muted);
-}
-
-.empty-state i {
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.5;
-}
-</style>
-
 {% endblock %}

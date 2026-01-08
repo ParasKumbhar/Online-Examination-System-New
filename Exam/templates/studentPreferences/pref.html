@@ -1,43 +1,69 @@
 {% extends 'base.html' %}
+{% block title %}Settings - ExamPro{% endblock %}
 
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Settings</h1>
+        <p class="text-slate-500">Manage your account preferences</p>
+    </div>
 
-{% block body %}
-<style media="screen">
-	*{
-		color: #745959;
-	}
-	button[type=submit]:hover{
-	        background: rgba(116, 89, 89,0.7);
-	    }
-</style>
-	<div class="container mt-3">
-		{% include 'partials/_messages.html' %}
-		<h5>Login Email Notifications</h5>
-		<form method="post" action="{% url 'email-student-pref' %}">
-			{% csrf_token %}
-			<div class="input-group">
-			  <select name = "email_pref" class="custom-select" id="inputGroupSelect04" aria-label="Example select with button addon">
+    {% include 'partials/_messages.html' %}
 
-			  	{% if student_preference %}
-			    	<option selected name = "email_pref" value = "{{ student_preference.sendEmailOnLogin }}">{{ email_pref_value }}</option>
-					<option name = "email_pref" value="False" >Off</option>
-                    <option name = "email_pref" value="True" >On</option>
-			    {% else %}
-					<option selected name = "email_pref" value = "True">On</option>
-					<option name = "email_pref" value="False" >Off</option>
-				{% endif %}
-			  </select>
-			  <div class="input-group-append">
-			    <button class="btn btn-outline-light" type="submit" value="Save" style="border-color:#745959; color:#745959;">Save</button>
-			  </div>
-			</div>
-		</form>
+    <!-- Email Preferences Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100">
+            <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-envelope text-slate-400"></i>
+                Email Notifications
+            </h2>
+        </div>
+        
+        <div class="p-6">
+            <form method="post" action="{% url 'email-student-pref' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="email_pref" class="block text-sm font-medium text-slate-700 mb-2">Login Notifications</label>
+                    <div class="flex gap-4">
+                        <select name="email_pref" id="email_pref" class="flex-1 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+                            {% if student_preference %}
+                                <option selected value="{{ student_preference.sendEmailOnLogin }}">{{ email_pref_value }}</option>
+                                <option value="False">Off</option>
+                                <option value="True">On</option>
+                            {% else %}
+                                <option selected value="True">On</option>
+                                <option value="False">Off</option>
+                            {% endif %}
+                        </select>
+                        <button type="submit" class="px-6 py-2 bg-primary hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                            Save
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Receive an email whenever your account is accessed.</p>
+                </div>
+            </form>
+        </div>
+    </div>
 
-		<hr/>
-		<h5>Change Password : <a href="{% url 'change_password'%}" class ="btn btn-sm btn-warning">Click here to change password</a></h5>
-
-	</div>
-
-
-
+    <!-- Security Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100">
+            <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-slate-400"></i>
+                Security
+            </h2>
+        </div>
+        <div class="p-6 flex items-center justify-between">
+            <div>
+                <p class="font-medium text-slate-900">Change Password</p>
+                <p class="text-sm text-slate-500">Update your password to keep your account secure</p>
+            </div>
+            <a href="{% url 'change_password' %}" class="px-4 py-2 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors">
+                Change Password
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}

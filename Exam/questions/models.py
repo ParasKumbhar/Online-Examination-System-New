@@ -27,8 +27,9 @@ class ExamForm(ModelForm):
         fields = '__all__'
         exclude = ['professor']
         widgets = {
-            'name': forms.TextInput(attrs = {'class':'form-control'}),
-            'total_marks' : forms.NumberInput(attrs = {'class':'form-control'}),
-            'start_time': forms.DateTimeInput(attrs = {'class':'form-control'}),
-            'end_time': forms.DateTimeInput(attrs = {'class':'form-control'})
+            'name': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
+            'total_marks' : forms.NumberInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
+            'start_time': forms.DateTimeInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary', 'type': 'datetime-local'}),
+            'end_time': forms.DateTimeInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary', 'type': 'datetime-local'}),
+            'question_paper': forms.Select(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'})
         }

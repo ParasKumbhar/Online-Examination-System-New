@@ -1,265 +1,128 @@
 {% extends "base.html" %}
-{% block title %}Student Dashboard{% endblock %}
+{% load static %}
+{% block title %}Student Dashboard - ExamPro{% endblock %}
 
 {% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
+        <p class="text-slate-500">Welcome back, {{ request.user.get_full_name|default:request.user.username }}</p>
+    </div>
 
-<div class="page-header">
-    <h1>Dashboard</h1>
-    <p class="subtitle">Welcome back, {{ request.user.get_full_name|default:request.user.username }}</p>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Upcoming Exams -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-file-lines"></i>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-slate-500">Upcoming Exams</p>
+                <p class="text-2xl font-bold text-slate-900">{{ upcoming_exams|length|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- Completed Exams -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-check-circle"></i>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-slate-500">Completed Exams</p>
+                <p class="text-2xl font-bold text-slate-900">{{ completed_exams|length|default:0 }}</p>
+            </div>
+        </div>
+
+        <!-- Average Score -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-slate-500">Average Score</p>
+                <p class="text-2xl font-bold text-slate-900">{{ avg_score|default:'0%' }}</p>
+            </div>
+        </div>
+
+        <!-- Rank -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-slate-500">Rank</p>
+                <p class="text-2xl font-bold text-slate-900">{{ rank|default:'N/A' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Upcoming Exams Table (Span 2) -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100">
+                <h2 class="text-lg font-semibold text-slate-900">Upcoming Exams</h2>
+            </div>
+            
+            {% if upcoming_exams %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-4">Exam Name</th>
+                            <th class="px-6 py-4">Subject</th>
+                            <th class="px-6 py-4">Date & Time</th>
+                            <th class="px-6 py-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for exam in upcoming_exams %}
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ exam.exam.name }}</td>
+                            <td class="px-6 py-4 text-slate-600">{{ exam.exam.question_paper.qPaperTitle }}</td>
+                            <td class="px-6 py-4 text-slate-600">{{ exam.exam.start_time|date:"M d, Y H:i" }}</td>
+                            <td class="px-6 py-4">
+                                <a href="{% url 'appear-exam' exam.id %}" 
+                                   class="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-sm font-medium transition-colors">
+                                    Take Exam
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-8 text-center text-slate-500">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl text-slate-400">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                </div>
+                <p>No upcoming exams scheduled.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions (Span 1) -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 h-fit">
+            <div class="p-6 border-b border-slate-100">
+                <h2 class="text-lg font-semibold text-slate-900">Quick Actions</h2>
+            </div>
+            <div class="p-4 space-y-3">
+                <a href="{% url 'view_exams_student' %}" 
+                   class="flex items-center gap-3 p-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors font-medium">
+                    <i class="fa-solid fa-eye w-5"></i> View All Exams
+                </a>
+                <a href="{% url 'student-previous' %}" 
+                   class="flex items-center gap-3 p-3 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors font-medium">
+                    <i class="fa-solid fa-history w-5"></i> Previous Results
+                </a>
+                <a href="{% url 'email-student-pref' %}" 
+                   class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 transition-colors font-medium">
+                    <i class="fa-solid fa-gear w-5"></i> Settings
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
-
-<!-- STATS GRID -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon blue">
-            <i class="fa-solid fa-file-lines"></i>
-        </div>
-        <div>
-            <h3>Upcoming Exams</h3>
-            <p class="stat-number">{{ upcoming_exams|length|default:0 }}</p>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon indigo">
-            <i class="fa-solid fa-check-circle"></i>
-        </div>
-        <div>
-            <h3>Completed Exams</h3>
-            <p class="stat-number">{{ completed_exams|length|default:0 }}</p>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon violet">
-            <i class="fa-solid fa-chart-line"></i>
-        </div>
-        <div>
-            <h3>Average Score</h3>
-            <p class="stat-number">{{ avg_score|default:'0%' }}</p>
-        </div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-icon amber">
-            <i class="fa-solid fa-trophy"></i>
-        </div>
-        <div>
-            <h3>Rank</h3>
-            <p class="stat-number">{{ rank|default:'N/A' }}</p>
-        </div>
-    </div>
-</div>
-
-<!-- CONTENT GRID -->
-<div class="content-grid">
-
-    <!-- UPCOMING EXAMS -->
-    <div class="card">
-        <div class="card-header">
-            <h2>Upcoming Exams</h2>
-        </div>
-
-        {% if upcoming_exams %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Exam Name</th>
-                    <th>Subject</th>
-                    <th>Date & Time</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for exam in upcoming_exams %}
-                <tr>
-                    <td>{{ exam.exam.name }}</td>
-                    <td>{{ exam.exam.question_paper.qPaperTitle }}</td>
-                    <td>{{ exam.exam.start_time|date:"M d, Y H:i" }}</td>
-                    <td><a href="{% url 'appear-exam' exam.id %}" class="link">Take Exam</a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty-state">
-            <i class="fa-solid fa-calendar-xmark"></i>
-            <p>No upcoming exams</p>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- QUICK ACTIONS -->
-    <div class="card">
-        <div class="card-header">
-            <h2>Quick Actions</h2>
-        </div>
-
-        <div class="actions">
-            <a href="{% url 'view_exams_student' %}" class="action-btn primary">
-                <i class="fa-solid fa-eye"></i> View All Exams
-            </a>
-            <a href="{% url 'student-previous' %}" class="action-btn secondary">
-                <i class="fa-solid fa-history"></i> Previous Results
-            </a>
-            <a href="{% url 'email-student-pref' %}" class="action-btn outline">
-                <i class="fa-solid fa-gear"></i> Settings
-            </a>
-        </div>
-    </div>
-
-</div>
-
-<style>
-.page-header h1 {
-    font-size: 26px;
-    font-weight: 700;
-}
-
-.subtitle {
-    color: var(--text-muted);
-    margin-top: 4px;
-}
-
-/* STATS */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    margin: 24px 0;
-}
-
-.stat-card {
-    background: var(--bg-card);
-    border-radius: 14px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow: 0 8px 20px rgba(15,23,42,0.06);
-}
-
-.stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 18px;
-}
-
-.stat-icon.blue { background: #2563eb; }
-.stat-icon.indigo { background: #4f46e5; }
-.stat-icon.violet { background: #7c3aed; }
-.stat-icon.amber { background: #f59e0b; }
-
-.stat-number {
-    font-size: 22px;
-    font-weight: 700;
-    margin-top: 4px;
-}
-
-/* GRID */
-.content-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
-}
-
-/* CARD */
-.card {
-    background: var(--bg-card);
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
-}
-
-.card-header {
-    margin-bottom: 16px;
-}
-
-.card-header h2 {
-    font-size: 18px;
-    font-weight: 600;
-}
-
-/* TABLE */
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th {
-    text-align: left;
-    font-size: 13px;
-    color: var(--text-muted);
-    padding-bottom: 10px;
-}
-
-.table td {
-    padding: 12px 0;
-    border-top: 1px solid var(--border);
-    font-size: 14px;
-}
-
-/* ACTIONS */
-.actions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.action-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.action-btn.primary {
-    background: var(--accent);
-    color: #fff;
-}
-
-.action-btn.secondary {
-    background: #e0e7ff;
-    color: #1e3a8a;
-}
-
-.action-btn.outline {
-    border: 1px solid var(--border);
-    color: var(--text-dark);
-}
-
-.link {
-    color: var(--accent);
-    font-size: 13px;
-    text-decoration: none;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-}
-
-.empty-state i {
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.5;
-}
-
-@media (max-width: 768px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-
 {% endblock %}

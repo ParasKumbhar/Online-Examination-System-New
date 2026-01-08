@@ -1,48 +1,48 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block title %}Available Exams - ExamPro{% endblock %}
 
-{% block css_block %}
-<link rel="stylesheet" href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css" integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
-{% endblock %}
-
-{% block body %}
-    <style>
-        img{
-        height:15em;
-        width:5em;
-      }
-    </style>
-    <div class="mt-5">
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Available Exams</h1>
+        <p class="text-slate-500">Select an exam to start</p>
     </div>
-    <div class="container">
-            <div class="row">
-                {% if exams %}
-                    {% for exam in exams %}
-                        <div class="card col-md-3 mt-3 ml-3 text-center" style="width: 18rem;">
-                            <img class="card-img-top" src="{% static 'img/book.png' %}">
-                            <div class="card-body">
-                                <h5 class="card-title">{{exam.name}}</h5>
-                                <p class="card-text text-center">Professor {{exam.professor}}</p>
-                            </div>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item text-center">Question Paper - {{exam.question_paper.qPaperTitle}}</li>
-                            </ul>
-                            <div class="card-body text-center">
-                                <a href="{% url 'appear-exam' exam.id %}"onclick="window.open(this.href, '_blank', 'width=800,height=800'); return false;"class="btn btn-outline-danger">Appear</a>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-            <div class="jumbotron col-md-12 text-center bg-success">
-                NO PENDING EXAMS
+
+    {% if exams %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for exam in exams %}
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="h-32 bg-slate-100 flex items-center justify-center border-b border-slate-100">
+                <img src="{% static 'img/book.png' %}" alt="Exam" class="h-20 w-auto opacity-80">
             </div>
-        {% endif %}
+            
+            <div class="p-5">
+                <h3 class="text-lg font-bold text-slate-900 mb-1 line-clamp-1">{{ exam.name }}</h3>
+                <p class="text-sm text-slate-500 mb-4">Prof. {{ exam.professor }}</p>
+                
+                <div class="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg mb-4 text-center">
+                    Paper: {{ exam.question_paper.qPaperTitle }}
+                </div>
+
+                <a href="{% url 'appear-exam' exam.id %}" 
+                   onclick="window.open(this.href, '_blank', 'width=800,height=800'); return false;"
+                   class="block w-full py-2.5 px-4 bg-primary hover:bg-indigo-700 text-white font-medium rounded-lg text-center transition-colors shadow-sm">
+                    Appear for Exam
+                </a>
             </div>
+        </div>
+        {% endfor %}
     </div>
-    
-
-
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+        <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500 text-3xl">
+            <i class="fa-solid fa-check-circle"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900 mb-2">No Pending Exams</h2>
+        <p class="text-slate-500">You're all caught up! Check back later for new exams.</p>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
-
-
-          

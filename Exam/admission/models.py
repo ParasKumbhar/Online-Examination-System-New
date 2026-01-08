@@ -11,7 +11,7 @@ class Department(models.Model):
 
 class Programme(models.Model):
     name = models.CharField(max_length=50)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, null=True, blank=True)
 
 class Nationality(models.Model):
     name = models.CharField(max_length=50)

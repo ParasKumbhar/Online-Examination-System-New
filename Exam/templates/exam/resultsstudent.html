@@ -1,36 +1,45 @@
-{% extends 'base_faculty.html' %}
+{% extends 'base.html' %}
+{% block title %}Student Results{% endblock %}
 
-{% block body %}
-    <div class="mt-5">
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Student Results</h1>
+        <p class="text-slate-500">View performance of students in your examinations</p>
     </div>
 
-<div class="row">
-	<div class="col-md-1"></div>
-    <div class="col-md-8">
-    <div class="ml-5 container">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {% if students %}
-                <table class="table">
-                    <thead class="thead" style="color: #745959; background-color: #87ff9b">
-                        <tr>
-                        <th scope="col">Student Name</th>
-                        <th scope="col">Scores of Exams Attended</th>
-                        </tr>
-                    </thead>
-                {% for key, values in students.items %}
-                        <tbody>
-                            <tr>
-                                <td>{{key}}</td>
-                                <td>{{values}}</td>
-                            </tr>
-                        </tbody>
-                {% endfor %}
-                </table>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-4">Student & Exam Details</th>
+                        <th class="px-6 py-4">Score</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for key, values in students.items %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ key }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                {{ values }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
-            <div class="jumbotron text-center bg-success">
-                NO STUDENT EXIST IN DATABASE
+        <div class="px-6 py-12 text-center text-slate-500">
+            <div class="flex flex-col items-center justify-center">
+                <i class="fa-solid fa-chart-bar text-4xl text-slate-300 mb-3"></i>
+                <p>No results found</p>
             </div>
+        </div>
         {% endif %}
     </div>
-
-
+</div>
 {% endblock %}

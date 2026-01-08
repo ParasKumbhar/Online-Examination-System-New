@@ -1,57 +1,85 @@
 {% extends 'base.html' %}
+{% block title %}Attendance{% endblock %}
 
-{% block body %}
-<style media="screen">
-  *{
-    color:#745959;
-  }
-</style>
-    <div class="mt-5">
+{% block content %}
+<div class="space-y-8">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Attendance Record</h1>
+        <p class="text-slate-500">Track your exam participation</p>
     </div>
-    <div class="container">
+
+    <!-- Not Attended (Pending/Upcoming) -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 class="text-lg font-semibold text-slate-900">Pending / Not Attended</h2>
+        </div>
         {% if exams %}
-                <table class="table">
-                    <thead class="thead" style="background-color: #a3d5ff;">
-                        <tr>
-                        <th scope="col">Exam Name</th>
-                        <th scope="col">Exam Professor</th>
-                        <th scope="col">Attendance</th>
-                        </tr>
-                    </thead>
-                {% for exam in exams %}
-                        <tbody>
-                            <tr>
-                            <td>{{exam.name}}</td>
-                            <td>{{exam.professor}}</td>
-                            <td>Not Attended</tr>
-                        </tbody>
-                {% endfor %}
-                </table>
-        {% endif %}
-    </div>
-    <div class="container">
-        {% if completed %}
-                <table class="table">
-                    <thead class="thead" style="background-color: #87ff9b">
-                        <tr>
-                        <th scope="col">Exam Name</th>
-                        <th scope="col">Exam Professor</th>
-                        <th scope="col">Attendance</th>
-                        </tr>
-                    </thead>
-            {% for exam in completed %}
-                    <tbody>
-                        <tr>
-                        <td>{{exam.name}}</td>
-                        <td>{{exam.professor}}</td>
-                        <td>
-                            Attended
-                        </tr>
-                    </tbody>
-                <input type="hidden" value="{{ exam }}" name="paper">
-            {% endfor %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-white text-slate-500 text-xs uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4">Exam Name</th>
+                        <th class="px-6 py-4">Professor</th>
+                        <th class="px-6 py-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for exam in exams %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ exam.professor }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                                Not Attended
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-8 text-center text-slate-500">
+            <p>No pending exams</p>
+        </div>
         {% endif %}
     </div>
 
+    <!-- Attended -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h2 class="text-lg font-semibold text-slate-900">Attended Exams</h2>
+        </div>
+        {% if completed %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-white text-slate-500 text-xs uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4">Exam Name</th>
+                        <th class="px-6 py-4">Professor</th>
+                        <th class="px-6 py-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for exam in completed %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ exam.professor }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                Attended
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-8 text-center text-slate-500">
+            <p>No exams attended yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

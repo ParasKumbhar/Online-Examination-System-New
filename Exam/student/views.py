@@ -71,58 +71,60 @@ class LoginView(View):
 		password = request.POST['password']
 
 		if username and password:
-			exis = User.objects.filter(username=username).exists()
-			if exis:
+			try:
 				user_ch = User.objects.get(username=username)
 				if user_ch.is_staff:
 					messages.error(request,"You are trying to login as student, but you have registered as faculty. We are redirecting you to faculty login. If you are having problem in logging in please reset password or contact admin")
 					return redirect('faculty-login')
+			except User.DoesNotExist:
+				pass
+
 			user = auth.authenticate(username=username,password=password)
 			if user:
 				if user.is_active:
 					auth.login(request,user)
-					student_pref = StudentPreferenceModel.objects.filter(user = request.user).exists()
-					email = User.objects.get(username=username).email
+					email = user.email
 
 					email_subject = 'You Logged into your Portal account'
 					email_body = "If you think someone else logged in. Please contact support or reset your password.\n\nYou are receving this message because you have enabled login email notifications in portal settings. If you don't want to recieve such emails in future please turn the login email notifications off in settings."
 					fromEmail = 'noreply@exam.com'
-					email = EmailMessage(
+					email_msg = EmailMessage(
 						email_subject,
 						email_body,
 						fromEmail,
 						[email],
 					)
-					if student_pref :
-						student = StudentPreferenceModel.objects.get(user=request.user)
-						sendEmail = student.sendEmailOnLogin 
-					if not student_pref :
-						EmailThread(email).start()
-					elif sendEmail:
-						EmailThread(email).start()
-					messages.success(request,"Welcome, "+ user.username + ". You are now logged in.")
+					
+					student_pref = StudentPreferenceModel.objects.filter(user=user).first()
+					if student_pref and not student_pref.sendEmailOnLogin:
+						pass # Do not send email
+					else:
+						# Send email if pref exists and is True, or if pref doesn't exist (default behavior)
+						# Logic in original code was slightly weird: 
+						# if student_pref exists, check sendEmailOnLogin. 
+						# if NOT student_pref, send email.
+						# So default is Send.
+						EmailThread(email_msg).start()
 
 					return redirect('index')
-			
+				else:
+					messages.error(request,"Account is not active")
+					return render(request,'student\login.html')
 			else:
-				user_n = User.objects.filter(username=username).exists()
-				if user_n:
-					user_v = User.objects.get(username=username)
-					if user_v.is_active:
-						messages.error(request,'Invalid credentials')	
-						return render(request,'student/login.html')
-					else:
-						messages.error(request,'Account not Activated')
-						return render(request,'student/login.html')
-
-		messages.error(request,'Please fill all fields')
-		return render(request,'student/login.html')
+				messages.error(request,"Invalid Credentials")
+				return render(request,'student\login.html')
+		return render(request,'student\login.html')
 
 class LogoutView(View):
-	def post(self,request):
-		auth.logout(request)
-		messages.success(request,'Logged Out')
-		return redirect('login')
+    def get(self, request):
+        auth.logout(request)
+        messages.success(request, 'Logged Out')
+        return redirect('login')
+
+    def post(self,request):
+        auth.logout(request)
+        messages.success(request,'Logged Out')
+        return redirect('login')
 
 class EmailThread(threading.Thread):
 	def __init__(self,email):

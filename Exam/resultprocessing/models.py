@@ -11,8 +11,8 @@ class Program(models.Model):
 
 class Student(models.Model):
     name = models.CharField(max_length=250)
-    program = models.ForeignKey(Program, on_delete=models.CASCADE)
-    year = models.IntegerField()
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, null=True, blank=True)
+    year = models.IntegerField(null=True, blank=True)
     # Add other student-related fields
 
 class Course(models.Model):

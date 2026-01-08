@@ -7,9 +7,9 @@ class FacultyForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'password']
         widgets = {
-            'password': forms.PasswordInput(attrs = {'id':'passwordfield','class':'form-control'}),
-            'email' : forms.EmailInput(attrs = {'id':'emailfield','class':'form-control'}),
-            'username' : forms.TextInput(attrs = {'id':'usernamefield','class':'form-control'})
+            'password': forms.PasswordInput(attrs = {'id':'passwordfield','class':'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all'}),
+            'email' : forms.EmailInput(attrs = {'id':'emailfield','class':'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all'}),
+            'username' : forms.TextInput(attrs = {'id':'usernamefield','class':'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all'})
         }
 
 class FacultyInfoForm(forms.ModelForm):
@@ -17,6 +17,7 @@ class FacultyInfoForm(forms.ModelForm):
         model = FacultyInfo
         fields = ['address','subject','picture']
         widgets = {
-            'address': forms.Textarea(attrs = {'class':'form-control'}),
-            'subject' : forms.TextInput(attrs = {'class':'form-control'})
+            'address': forms.Textarea(attrs = {'class':'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all', 'rows': 3}),
+            'subject' : forms.TextInput(attrs = {'class':'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all'}),
+            'picture': forms.FileInput(attrs={'class': 'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all'})
         }
