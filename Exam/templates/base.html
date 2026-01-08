@@ -1,50 +1,285 @@
-{% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Portal</title>
-     {% block css_block %}
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'css/main.css' %}" rel="stylesheet">
-    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
-     {% endblock %}
+    <title>{% block title %}Online Examination System{% endblock %}</title>
+
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    {% block extra_css %}{% endblock %}
 </head>
+
 <body>
-<style media="screen">
-  *{
-    color: #271c4d;
-  }
-  input[type=submit]:hover{
-          background: #a3d5ff;
-  }
-</style>
-    <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
-      <a href="{% url 'index' %}" style="color:#1f154b" >Home</a>
-      <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <ul class="navbar-nav px-3" style="display:flex;flex-direction:row;align-items:center">
-        <li class="nav-item text-nowrap">
-          <a class="nav-link" href="{% url 'email-student-pref' %}">Hi, {{request.user.username}}</a>
-        </li>
-      </ul>
-    </nav>
 
-    {% include 'partials/_sidebar.html' %}
+<div class="app-layout">
 
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span>ExamPro</span>
+        </div>
 
-      {% block body %}
+        <nav class="sidebar-menu">
+            {% if user.groups.all.0.name == 'Professor' %}
+                <!-- Faculty Sidebar -->
+                <a href="{% url 'faculty-index' %}" class="menu-item">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
 
+                <div class="menu-section">Examinations</div>
+                <a href="{% url 'view_exams' %}" class="menu-item">
+                    <i class="fa-solid fa-file-circle-plus"></i>
+                    <span>Create Exam</span>
+                </a>
+                <a href="{% url 'faculty-addquestions' %}" class="menu-item">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Questions</span>
+                </a>
 
-      {% endblock %}
+                <div class="menu-section">Management</div>
+                <a href="{% url 'faculty-student' %}" class="menu-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Students</span>
+                </a>
+                <a href="{% url 'faculty-result' %}" class="menu-item">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Results</span>
+                </a>
+            {% elif user.groups.all.0.name == 'Student' %}
+                <!-- Student Sidebar -->
+                <a href="{% url 'index' %}" class="menu-item">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <div class="menu-section">Exams</div>
+                <a href="{% url 'view_exams_student' %}" class="menu-item">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Upcoming Exams</span>
+                </a>
+                <a href="{% url 'student-previous' %}" class="menu-item">
+                    <i class="fa-solid fa-history"></i>
+                    <span>Previous Exams</span>
+                </a>
+
+                <div class="menu-section">Account</div>
+                <a href="{% url 'email-student-pref' %}" class="menu-item">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            {% endif %}
+        </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <button class="sidebar-toggle" id="toggleBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="topbar-right">
+                <span class="role-badge">
+                    {% if user.groups.all.0.name == 'Professor' %}
+                        Faculty Panel
+                    {% elif user.groups.all.0.name == 'Student' %}
+                        Student Panel
+                    {% endif %}
+                </span>
+                <div class="user-menu">
+                    <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                    <a href="{% if user.groups.all.0.name == 'Professor' %}{% url 'faculty-logout' %}{% else %}{% url 'logout' %}{% endif %}" class="logout-btn">
+                        <i class="fa-solid fa-sign-out-alt"></i>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <section class="page-content">
+            {% block content %}{% endblock %}
+        </section>
 
     </main>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-    <script>window.jQuery || document.write('<script src="/docs/4.5/assets/js/vendor/jquery.slim.min.js"><\/script>')</script>
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</div>
+
+<!-- GLOBAL STYLES -->
+<style>
+:root {
+    --bg-main: #f5f7fb;
+    --bg-sidebar: #0f172a;
+    --bg-card: #ffffff;
+    --accent: #2563eb;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border: #e5e7eb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
+}
+
+body {
+    background: var(--bg-main);
+    color: var(--text-dark);
+}
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 260px;
+    background: var(--bg-sidebar);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.sidebar.collapsed {
+    width: 70px;
+}
+
+.sidebar.collapsed .sidebar-brand span,
+.sidebar.collapsed .menu-item span,
+.sidebar.collapsed .menu-section {
+    display: none;
+}
+
+.sidebar.collapsed .menu-item {
+    justify-content: center;
+    padding: 12px;
+}
+
+.sidebar-brand {
+    padding: 22px;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-menu {
+    padding: 12px;
+}
+
+.menu-section {
+    margin: 18px 12px 6px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 4px;
+    color: #e5e7eb;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background 0.2s ease;
+}
+
+.menu-item:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+/* MAIN */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* TOP BAR */
+.topbar {
+    height: 64px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.sidebar-toggle {
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.role-badge {
+    background: var(--bg-main);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.logout-btn {
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: var(--bg-main);
+    color: var(--text-dark);
+}
+
+/* PAGE */
+.page-content {
+    padding: 24px;
+}
+</style>
+
+<!-- JS -->
+<script>
+const toggleBtn = document.getElementById("toggleBtn");
+const sidebar = document.getElementById("sidebar");
+
+toggleBtn.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+});
+</script>
 
 </body>
 </html>

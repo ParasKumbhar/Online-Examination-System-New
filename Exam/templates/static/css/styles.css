@@ -25,3 +25,20 @@ th, td {
 th {
     background-color: #f2f2f2;
 }
+button, a {
+  transition: all 0.2s ease;
+}
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(0);
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}

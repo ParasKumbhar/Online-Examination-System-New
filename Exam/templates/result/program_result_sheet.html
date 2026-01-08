@@ -1,31 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Program Result Sheet</title>
-</head>
-<body>
-    <h1>Program Result Sheet</h1>
-    <h2>Department: {{ department_id }}</h2>
+{% extends 'base.html' %}
+{% block title %}Program Result Sheet{% endblock %}
 
-    {% for program_result in program_results %}
-    <h3>Program: {{ program_result.program.name }}</h3>
-    <table>
-        <tr>
-            <th>Student Name</th>
-            <th>GPA</th>
-            <th>CGPA</th>
-            <th>Class</th>
-        </tr>
-        {% for student_result in program_result.students %}
-        <tr>
-            <td>{{ student_result.student.name }}</td>
-            <td>{{ student_result.gpa }}</td>
-            <td>{{ student_result.cgpa }}</td>
-            <td>{{ student_result.student_class }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endfor %}
-</body>
-</html>
+{% block content %}
+
+<div class="page-header">
+    <h1>Program Result Sheet</h1>
+    <p class="subtitle">Department: {{ department_id }}</p>
+</div>
+
+{% for program_result in program_results %}
+<div class="program-card">
+    <h2>{{ program_result.program.name }}</h2>
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>GPA</th>
+                    <th>CGPA</th>
+                    <th>Class</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student_result in program_result.students %}
+                <tr>
+                    <td>{{ student_result.student.name }}</td>
+                    <td>{{ student_result.gpa }}</td>
+                    <td>{{ student_result.cgpa }}</td>
+                    <td>{{ student_result.student_class }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+<style>
+.program-card {
+    margin-bottom: 32px;
+}
+
+.program-card h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: var(--text-dark);
+}
+
+.table-card {
+    background: var(--bg-card);
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: 12px;
+}
+
+.data-table td {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+}
+</style>
+
+{% endblock %}

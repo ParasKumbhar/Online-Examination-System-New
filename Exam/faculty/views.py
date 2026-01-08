@@ -12,10 +12,32 @@ from student.views import EmailThread
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from questions.views import has_group
+from django.utils import timezone
 
 @login_required(login_url='faculty-login')
 def index(request):
-    return render(request,'faculty/index.html')
+    from questions.models import Exam_Model
+    from student.models import StudentInfo
+    from django.utils import timezone
+
+    # Get real data for the dashboard
+    total_exams = Exam_Model.objects.filter(professor=request.user).count()
+    total_students = StudentInfo.objects.count()
+    completed_exams = Exam_Model.objects.filter(professor=request.user, end_time__lt=timezone.now()).count()
+    upcoming_exams = Exam_Model.objects.filter(professor=request.user, start_time__gt=timezone.now()).count()
+
+    # Get recent exams (last 5)
+    recent_exams = Exam_Model.objects.filter(professor=request.user).order_by('-start_time')[:5]
+
+    context = {
+        'total_exams': total_exams,
+        'total_students': total_students,
+        'completed_exams': completed_exams,
+        'upcoming_exams': upcoming_exams,
+        'recent_exams': recent_exams,
+    }
+
+    return render(request, 'faculty/index.html', context)
 
 class Register(View):
     def get(self,request):
