@@ -1,83 +1,283 @@
-{% extends 'base_faculty.html' %}
+{% extends "base.html" %}
 
-{% block body %}
-    <style>
-    body{
-      background-color: #f5f5f5;
-    }
+{% block title %}Faculty Dashboard{% endblock %}
 
-    *{
-      color: #745959;
-    }
+{% block content %}
 
-    .cards{
-      width: 25em;
-      height: 15em;
-      background-color: white;
-      display: flex;
-      align-items:center;
-      justify-content: center;
-      background-color: #87ff9b;
-    }
-    .distribute{
-	  padding-left: 5em;
-      display: grid;
-      grid-template-columns: 33.33% 33.33% auto;
-    }
-    .jumbotron{
-      padding-top: 5em;
-      padding-bottom: 15em;
-    }
-
-    .cards h2 {
-      display: none;
-    }
-    .cards:hover h1{
-      display: none;
-      transition: all 0.3s ease;
-    }
-    .cards:hover h2 {
-      display: flex;
-      text-align: center;
-      padding-left: 1em;
-      padding-right: 1em;
-      transition: all 0.3s ease;
-    }
-    .cards:hover {
-      transform: translateX(-0.5em);
-      transform: translateY(-0.5em);
-      box-shadow: 0.7em 0.7em 0.5em #d6d6d6;
-      transition: 0.3s ease;
-    }
-
-
-    </style>
-    <div class="container mt-5">
-      {% include 'partials/_messages.html' %}
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p class="subtitle">Overview of examinations and activity</p>
     </div>
-    <div class="container mt-5 text-center">
-      <h3>Instructions to create New Exam</h3>
-    </div>
-    <div class="container mt-5">
-    </div>
-    <div class="distribute">
-      <a href="{% url 'faculty-addquestions' %}">
-        <div class="cards">
-          <h1>First Step</h1>
-          <h2>First you will have to create new questions to be added in question paper</h2>
+</div>
+
+<!-- STATS GRID -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon blue">
+            <i class="fa-solid fa-file-lines"></i>
         </div>
-      </a>
-      <a  href="{% url 'faculty-add_question_paper' %}">
-        <div class="cards">
-          <h1>Second Step</h1>
-          <h2>Now Create question paper and add those questions.</h2>
+        <div>
+            <h3>Total Exams</h3>
+            <p class="stat-number">{{ total_exams }}</p>
         </div>
-      </a>
-      <a href="{% url 'view_exams' %}">
-        <div class="cards">
-          <h1>Third Step</h1>
-          <h2>Finally you can create an exam paper and add the question paper.</h2>
-        </div>
-      </a>
     </div>
-  {% endblock %}
+
+    <div class="stat-card">
+        <div class="stat-icon indigo">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div>
+            <h3>Students</h3>
+            <p class="stat-number">{{ total_students }}</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon violet">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <h3>Completed Exams</h3>
+            <p class="stat-number">{{ completed_exams }}</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon amber">
+            <i class="fa-solid fa-clock"></i>
+        </div>
+        <div>
+            <h3>Upcoming</h3>
+            <p class="stat-number">{{ upcoming_exams }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- CONTENT GRID -->
+<div class="content-grid">
+
+    <!-- RECENT EXAMS -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Exams</h2>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Exam Name</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exam in recent_exams %}
+                <tr>
+                    <td>{{ exam.exam_name }}</td>
+                    <td>{{ exam.start_time|date:"d M Y" }}</td>
+                    <td>
+                        {% if exam.end_time < now %}
+                            <span class="badge success">Completed</span>
+                        {% elif exam.start_time > now %}
+                            <span class="badge warning">Upcoming</span>
+                        {% else %}
+                            <span class="badge info">Active</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if exam.end_time < now %}
+                            <a href="#" class="link">View Results</a>
+                        {% else %}
+                            <a href="#" class="link">Manage</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        No exams created yet
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Quick Actions</h2>
+        </div>
+
+        <div class="actions">
+            <a href="{% url 'view_exams' %}" class="action-btn primary">
+                <i class="fa-solid fa-plus"></i> Create Exam
+            </a>
+            <a href="{% url 'faculty-addquestions' %}" class="action-btn secondary">
+                <i class="fa-solid fa-pen"></i> Add Questions
+            </a>
+            <a href="{% url 'faculty-result' %}" class="action-btn outline">
+                <i class="fa-solid fa-chart-simple"></i> View Results
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<!-- PAGE STYLES -->
+<style>
+.page-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* STATS */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin: 24px 0;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+}
+
+.stat-icon.blue { background: #2563eb; }
+.stat-icon.indigo { background: #4f46e5; }
+.stat-icon.violet { background: #7c3aed; }
+.stat-icon.amber { background: #f59e0b; }
+
+.stat-number {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+/* GRID */
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+/* CARD */
+.card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.card-header {
+    margin-bottom: 16px;
+}
+
+.card-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* TABLE */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding-bottom: 10px;
+}
+
+.table td {
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+}
+
+/* BADGES */
+.badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* ACTIONS */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.action-btn.primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.action-btn.secondary {
+    background: #e0e7ff;
+    color: #1e3a8a;
+}
+
+.action-btn.outline {
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+}
+
+.link {
+    color: var(--accent);
+    font-size: 13px;
+    text-decoration: none;
+}
+</style>
+
+{% endblock %}

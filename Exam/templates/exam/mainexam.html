@@ -1,108 +1,110 @@
-{% extends 'base_faculty.html' %}
+{% extends "base.html" %}
+{% block title %}Create Exam{% endblock %}
 
-{% block body %}
-<div class="container mt-5">
-    <div class="row">
+{% block content %}
 
-        <div class="col-lg-8">
-            <div class="card shadow-sm mb-4" style="border-color:#745959;">
-                <div class="card-header text-center" style="background:#87FF9B;">
-                    <h4>Your Exams</h4>
-                </div>
+<div class="page-header">
+    <h1>Create New Examination</h1>
+    <p class="subtitle">Define exam details carefully before publishing</p>
+</div>
 
-                <div class="card-body">
-                    {% if exams %}
-                        <div class="row">
-                            {% for exam in exams %}
-                                <div class="col-md-6 mb-3">
-                                    <div class="card h-100" style="border-color:#745959;">
-                                        <div class="card-body">
-                                            <h5>{{ exam.name }}</h5>
-                                            <p>
-                                                <strong>Total Marks:</strong> {{ exam.total_marks }}<br>
-                                                <strong>Question Paper:</strong> {{ exam.question_paper.qPaperTitle }}<br>
-                                                <strong>Start:</strong> {{ exam.start_time|date:"M d, Y H:i" }}<br>
-                                                <strong>End:</strong> {{ exam.end_time|date:"M d, Y H:i" }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-center">No exams created yet.</p>
-                    {% endif %}
-                </div>
+<div class="form-card">
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-grid">
+            {% for field in examform %}
+            <div class="form-group{% if field.name == 'instructions' or field.name == 'exam_name' %} full{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="text-danger">{{ field.errors }}</div>
+                {% endif %}
             </div>
+            {% endfor %}
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm" style="border-color:#745959;">
-                <div class="card-header text-center" style="background:#87FF9B;">
-                    <h4>Create New Exam</h4>
-                </div>
-
-                <div class="card-body">
-                    <form method="POST" action="{% url 'view_exams' %}">
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label>Exam Name</label>
-                            {{ examform.name }}
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Total Marks</label>
-                            {{ examform.total_marks }}
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Question Paper</label>
-                            {{ examform.question_paper }}
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Start Time</label>
-                            <input type="datetime-local"
-                                   name="start_time"
-                                   value="{{ examform.start_time.value|default:'' }}"
-                                   class="form-control">
-                        </div>
-
-                        <div class="mb-3">
-                            <label>End Time</label>
-                            <input type="datetime-local"
-                                   name="end_time"
-                                   value="{{ examform.end_time.value|default:'' }}"
-                                   class="form-control">
-                        </div>
-
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-lg" style="border-color:#745959;">
-                                Create Exam
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <div class="form-actions">
+            <button type="submit" class="btn primary">
+                <i class="fa-solid fa-plus"></i> Create Exam
+            </button>
+            <button type="reset" class="btn secondary">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
         </div>
 
-    </div>
+    </form>
 </div>
 
 <style>
-* { color:#745959; }
-
-button[type=submit]:hover {
-    background:#87FF9B;
+.form-card {
+    background: var(--bg-card);
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+    max-width: 900px;
 }
 
-.form-control, select {
-    border-color:#745959;
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
 }
 
-.form-control:focus, select:focus {
-    box-shadow:0 0 0 0.2rem rgba(116,89,89,.25);
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full {
+    grid-column: span 2;
+}
+
+label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-dark);
+}
+
+input, textarea {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    background: #fff;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+.form-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn.secondary {
+    background: #e5e7eb;
+    color: var(--text-dark);
 }
 </style>
+
 {% endblock %}

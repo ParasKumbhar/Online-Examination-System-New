@@ -1,38 +1,79 @@
-{% extends 'base_faculty.html' %}
+{% extends 'base.html' %}
+{% block title %}Previous Exams{% endblock %}
 
-{% block body %}
-    <div class="mt-5">
+{% block content %}
+
+<div class="page-header">
+    <h1>Previous Exams</h1>
+    <p class="subtitle">View completed examinations</p>
+</div>
+
+<div class="table-card">
+    {% if exams %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Exam Name</th>
+                <th>Professor</th>
+                <th>Total Marks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exam in exams %}
+            <tr>
+                <td>{{ exam.name }}</td>
+                <td>{{ exam.professor }}</td>
+                <td>{{ exam.total_marks }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <i class="fa-solid fa-file-circle-xmark"></i>
+        <p>No exams created yet</p>
     </div>
+    {% endif %}
+</div>
 
-<div class="row">
-	<div class="col-md-2"></div>
-    <div class="col-md-6">
-    <div class="ml-5 container">
-        {% if exams %}
-                <table class="table">
-                    <thead class="thead" style="color: #745959; background-color: #87ff9b">
-                        <tr>
-                        <th scope="col">Exam Name</th>
-                        <th scope="col">Exam Professor</th>
-                        <th scope="col">Exam Total Marks</th>
-                        </tr>
-                    </thead>
-                {% for exam in exams %}
-                        <tbody>
-                            <tr>
-                            <td>{{exam.name}}</td>
-                            <td>{{exam.professor}}</td>
-                            <td>{{exam.total_marks}}</td>
-                            </tr>
-                        </tbody>
-                {% endfor %}
-                </table>
-        {% else %}
-            <div class="jumbotron text-center bg-success">
-                NO EXAMS CREATED
-            </div>
-        {% endif %}
-    </div>
+<style>
+.table-card {
+    background: var(--bg-card);
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+}
 
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: 12px;
+}
+
+.data-table td {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+</style>
 
 {% endblock %}

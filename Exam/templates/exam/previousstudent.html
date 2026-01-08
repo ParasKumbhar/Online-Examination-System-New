@@ -1,37 +1,96 @@
 {% extends 'base.html' %}
+{% block title %}Previous Exams{% endblock %}
 
-{% block body %}
-    <div class="mt-5">
-    </div>
-    <div class="container">
-        {% if completed %}
-                <table class="table">
-                    <thead class="thead" style="color: #745959; background-color: #87ff9b">
-                        <tr>
-                        <th scope="col">Exam Name</th>
-                        <th scope="col">Exam title</th>
-                        <th scope="col">Exam Professor</th>
-                        <th scope="col">Action</th>
-                        </tr>
-                    </thead>
+{% block content %}
+
+<div class="page-header">
+    <h1>Previous Exams</h1>
+    <p class="subtitle">View your completed examinations and results</p>
+</div>
+
+<div class="table-card">
+    {% if completed %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Exam Name</th>
+                <th>Question Paper</th>
+                <th>Professor</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
             {% for exam in completed %}
-                    <tbody>
-                        <tr>
-                        <td>{{exam.name}}</td>
-                        <td>{{exam.question_paper.qPaperTitle}}</td>
-                        <td>{{exam.professor}}</td>
-                        <td>
-                            <a href="{% url 'result' exam.id  %}" class="btn btn-sm btn-info">Result</a>
-                        </tr>
-                    </tbody>
-                <input type="hidden" value="{{ exam }}" name="paper">
+            <tr>
+                <td>{{ exam.name }}</td>
+                <td>{{ exam.question_paper.qPaperTitle }}</td>
+                <td>{{ exam.professor }}</td>
+                <td>
+                    <a href="{% url 'result' exam.id %}" class="btn primary small">View Result</a>
+                </td>
+            </tr>
             {% endfor %}
-            </table>
-        {% else %}
-            <div class="jumbotron col-md-12 text-center bg-success">
-                NO EXAMS
-            </div>
-        {% endif %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <i class="fa-solid fa-history"></i>
+        <p>No completed exams</p>
     </div>
+    {% endif %}
+</div>
+
+<style>
+.table-card {
+    background: var(--bg-card);
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: 12px;
+}
+
+.data-table td {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.btn.small {
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+</style>
 
 {% endblock %}

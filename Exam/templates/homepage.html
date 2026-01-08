@@ -1,125 +1,253 @@
 {% load static %}
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome</title>
-  <link rel="stylesheet"
-    href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css"
-    integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Examination System</title>
+
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-main: #f5f7fb;
+            --bg-card: #ffffff;
+            --accent: #2563eb;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn.primary {
+            background: #fff;
+            color: var(--accent);
+        }
+
+        .btn.primary:hover {
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn.secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn.secondary:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .features {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 60px;
+            color: var(--text-dark);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            padding: 32px;
+            border-radius: 18px;
+            box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+            text-align: center;
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--accent);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 24px;
+            margin: 0 auto 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .about {
+            background: var(--bg-card);
+            padding: 80px 20px;
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about h2 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .about p {
+            font-size: 18px;
+            line-height: 1.8;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
-
 <body>
-  <style>
-    * {
-
-      font-family: cursive;
-      color: #271a70;
-      background-color: white;
-
-    }
-
-    .main {
-      padding-left: 3%;
-      display: grid;
-      /* grid-template-columns: 45% auto; */
-
-    }
-
-    .abt {
-      margin-top: 400px;
-      padding-right: 3%;
-      width: 95%;
-      /* border: solid 2px red ; */
-
-    }
-
-    button {
-      margin: 1em;
-      margin-left: 5em;
-    }
-
-    img {
-      position: absolute;
-      top: 50px;
-      left: 0;
-      height: 25em;
-      width: 100%;
-      /* transition: all 0.3s ease-in-out; */
-    }
-
-    .prof button[type=submit]:hover {
-      background-color: #2EE59D;
-      box-shadow: 0px 15px 20px rgba(46, 229, 157, 0.4);
-      color: #fff;
-      transform: translateY(-7px);
-
-    }
-
-    .student button[type=submit]:hover {
-      background-color: #5eadee;
-      box-shadow: 0px 15px 20px rgba(4, 112, 139, 0.4);
-      color: #fff;
-      transform: translateY(-7px);
-
-    }
-  </style>
-  <nav class="navbar navbar-light" style="background-color:#49c5b6">
-    <a class="navbar-brand" style="color: white; padding-left: 5em;">
-      Welcome!
-    </a>
-  </nav>
-  <div class="main">
-    <div class="abt">
-      <br><br>
-      <h1><u>Online Examination System</u></h1>
-      <br>
-      <h5>Students and teachers have faced inconveniences of varying degrees while trying to handle the examinations in
-        an online format. Our project aims to aid the students and the teachers in the process of conducting exams so
-        that the teachers can be stress free about the time taken by students for conducting exams while being sure that
-        they have not been cheating during the test. </h5>
-      <br>
-      <h5>Our project includes a basic system for teachers to create examinations for their students and schedule them
-        while also being able to check the results of the students. It also includes a system for students to keep track
-        of their past exams and results while being aware of their future examinations.</h5>
-      <br>
-      <h5>
-        Online examination system has become popular for competitive examinations because of
-        its unique features such as auto-evaluation, speed and accuracy. Moreover, it also helps environments
-        by reducing the use of paper.
-      </h5>
-      <br><br>
-      <div class="prof">
-        <h2>Professor Section: </h2>
-        <div class="row">
-          <form method="get" action="{% url 'faculty-login' %}">
-            <button type="submit" class="btn btn-raised btn-lg" style="color: #745959">Login</button>
-          </form>
-          <form method="get" action="{% url 'faculty-register' %}">
-            <button type="submit" class="btn btn-raised btn-lg" style="color: #745959">Signup</button>
-          </form>
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <h1>Welcome to ExamPro</h1>
+        <p>Advanced Online Examination System for Modern Education</p>
+        <div class="hero-buttons">
+            <a href="{% url 'faculty-login' %}" class="btn primary">
+                <i class="fa-solid fa-user-tie"></i> Faculty Portal
+            </a>
+            <a href="{% url 'login' %}" class="btn secondary">
+                <i class="fa-solid fa-user-graduate"></i> Student Portal
+            </a>
         </div>
-      </div>
-      <br><br>
-      <div class="student">
-        <h2>Student Section: </h2>
-        <div class="row">
-          <form method="get" action="{% url 'login' %}">
-            <button type="submit" class="btn btn-raised btn-lg" style="color: #745959">Login</button>
-          </form>
-          <form method="get" action="{% url 'register' %}">
-            <button type="submit" class="btn btn-raised btn-lg" style="color: #745959">Signup</button>
-          </form>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="features">
+        <h2>Key Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-shield-alt"></i>
+                </div>
+                <h3>Secure Exams</h3>
+                <p>Advanced security measures to prevent cheating and ensure fair examinations.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <h3>Real-time Results</h3>
+                <p>Instant evaluation and comprehensive result analysis for better insights.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <h3>Flexible Scheduling</h3>
+                <p>Schedule exams at your convenience with automated reminders and notifications.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h3>Eco-Friendly</h3>
+                <p>Reduce paper usage and contribute to environmental conservation.</p>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="img">
-      <!-- <img src="{% static 'img/ems.jpg' %}" alt="Exam Portal"> -->
-      <img src="https://i.ibb.co/S5H1frd/ems.jpg" alt=" Mmkay">
-    </div>
-  </div>
-  <hr>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section class="about">
+        <div class="about-content">
+            <h2>About ExamPro</h2>
+            <p>Our Online Examination System addresses the challenges faced by students and teachers in conducting exams remotely. Teachers can create, schedule, and manage examinations effortlessly, while students can take exams securely from anywhere.</p>
+            <p>The system features auto-evaluation, speed, and accuracy, making it ideal for competitive examinations. By going digital, we help reduce the environmental impact of traditional paper-based testing.</p>
+        </div>
+    </section>
 </body>
-
 </html>

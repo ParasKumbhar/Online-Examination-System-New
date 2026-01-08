@@ -1,29 +1,123 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Student Results</title>
-</head>
-<body>
-    <h1>Student Results</h1>
-    <h2>{{ student.name }}</h2>
-    <p>GPA: {{ gpa }}</p>
-    <p>CGPA: {{ cgpa }}</p>
-    <p>Class: {{ student_class }}</p>
+{% extends 'base.html' %}
+{% block title %}Student Results{% endblock %}
 
-    <table>
-        <tr>
-            <th>Course</th>
-            <th>Semester</th>
-            <th>Total Score</th>
-        </tr>
-        {% for result in results %}
-        <tr>
-            <td>{{ result.course.name }}</td>
-            <td>{{ result.semester }}</td>
-            <td>{{ result.total_score }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+{% block content %}
+
+<div class="page-header">
+    <h1>Student Results</h1>
+    <p class="subtitle">Academic performance overview</p>
+</div>
+
+<div class="results-card">
+    <div class="student-info">
+        <h2>{{ student.name }}</h2>
+        <div class="stats">
+            <div class="stat">
+                <span class="label">GPA</span>
+                <span class="value">{{ gpa }}</span>
+            </div>
+            <div class="stat">
+                <span class="label">CGPA</span>
+                <span class="value">{{ cgpa }}</span>
+            </div>
+            <div class="stat">
+                <span class="label">Class</span>
+                <span class="value">{{ student_class }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-table">
+        <h3>Course Results</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Semester</th>
+                    <th>Total Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr>
+                    <td>{{ result.course.name }}</td>
+                    <td>{{ result.semester }}</td>
+                    <td>{{ result.total_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.results-card {
+    background: var(--bg-card);
+    padding: 32px;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+    max-width: 800px;
+}
+
+.student-info {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.student-info h2 {
+    font-size: 24px;
+    margin-bottom: 16px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat .label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.stat .value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.results-table h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: 12px;
+}
+
+.data-table td {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+}
+</style>
+
+{% endblock %}
