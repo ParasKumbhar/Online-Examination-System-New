@@ -2,76 +2,54 @@
 {% block title %}Program Result Sheet{% endblock %}
 
 {% block content %}
-
-<div class="page-header">
-    <h1>Program Result Sheet</h1>
-    <p class="subtitle">Department: {{ department_id }}</p>
-</div>
-
-{% for program_result in program_results %}
-<div class="program-card">
-    <h2>{{ program_result.program.name }}</h2>
-    <div class="table-card">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Student Name</th>
-                    <th>GPA</th>
-                    <th>CGPA</th>
-                    <th>Class</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for student_result in program_result.students %}
-                <tr>
-                    <td>{{ student_result.student.name }}</td>
-                    <td>{{ student_result.gpa }}</td>
-                    <td>{{ student_result.cgpa }}</td>
-                    <td>{{ student_result.student_class }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Program Result Sheet</h1>
+        <p class="text-slate-500">Department: <span class="font-medium text-primary">{{ department_id }}</span></p>
     </div>
+
+    {% for program_result in program_results %}
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100">
+            <h2 class="text-lg font-semibold text-slate-900">{{ program_result.program.name }}</h2>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-4">Student Name</th>
+                        <th class="px-6 py-4">GPA</th>
+                        <th class="px-6 py-4">CGPA</th>
+                        <th class="px-6 py-4">Class</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for student_result in program_result.students %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ student_result.student.name }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ student_result.gpa }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ student_result.cgpa }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if 'First' in student_result.student_class %}bg-emerald-100 text-emerald-800
+                                {% elif 'Second' in student_result.student_class %}bg-blue-100 text-blue-800
+                                {% else %}bg-slate-100 text-slate-800{% endif %}">
+                                {{ student_result.student_class }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-slate-500">
+                            No students found for this program
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
 </div>
-{% endfor %}
-
-<style>
-.program-card {
-    margin-bottom: 32px;
-}
-
-.program-card h2 {
-    font-size: 20px;
-    margin-bottom: 16px;
-    color: var(--text-dark);
-}
-
-.table-card {
-    background: var(--bg-card);
-    padding: 22px;
-    border-radius: 18px;
-    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table th {
-    text-align: left;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    padding-bottom: 12px;
-}
-
-.data-table td {
-    padding: 14px 0;
-    border-top: 1px solid var(--border);
-    font-size: 14px;
-}
-</style>
-
 {% endblock %}

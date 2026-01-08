@@ -1,30 +1,50 @@
-{% extends 'base.html' %}    
+{% extends 'base.html' %}
+{% block title %}Result - ExamPro{% endblock %}
 
-{% block body %}
-    <div class="mt-5">
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <!-- Result Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden text-center p-8">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-slate-900 mb-2">{{ exam.name }}</h1>
+            <p class="text-slate-500">{{ exam.question_paper.qPaperTitle }}</p>
+        </div>
+
+        <div class="flex flex-col items-center justify-center mb-8">
+            <div class="relative w-40 h-40 flex items-center justify-center">
+                <!-- Circular Progress Background -->
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-slate-100" />
+                    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-primary" 
+                            stroke-dasharray="440" 
+                            stroke-dashoffset="{{ score|add:0|default:0|widthratio:exam.total_marks|add:0|default:100:440 }}" 
+                            stroke-linecap="round" />
+                </svg>
+                <!-- Score Text -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-4xl font-bold text-slate-900">{{ score }}</span>
+                    <span class="text-sm text-slate-500">/ {{ exam.total_marks }}</span>
+                </div>
+            </div>
+            <p class="mt-4 text-lg font-medium text-slate-700">Your Score</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <div>
+                <p class="text-xs text-slate-500 uppercase font-semibold">Professor</p>
+                <p class="font-medium text-slate-900">{{ exam.professor }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 uppercase font-semibold">Date</p>
+                <p class="font-medium text-slate-900">{{ exam.start_time|date:"F d, Y" }}</p>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <a href="{% url 'index' %}" class="inline-block px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg transition-colors">
+                Back to Dashboard
+            </a>
+        </div>
     </div>
-    <div class="container">
-        
-        <table class="table">
-            <thead class="thead-dark">
-                <tr>
-                <th scope="col">Exam Professor</th>
-                <th scope="col">Exam Name</th>
-                <th scope="col">Exam Title</th>
-                <th scope="col">Marks Obtained</th>
-                <th scope="col">Total Marks</th>
-                </tr>
-            </thead>
-                <tbody>
-                    <tr>
-                    <td>{{exam.professor}}</td>
-                    <td>{{exam.name}}</td>
-                    <td>{{exam.question_paper.qPaperTitle}}</td>
-                    <td>{{score}}</td>
-                    <td>{{exam.total_marks}}</td>
-                    </tr>
-                </tbody>
-        </table>
-    </div>
-    
+</div>
 {% endblock %}

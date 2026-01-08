@@ -2,80 +2,38 @@
 {% block title %}Add Question Paper{% endblock %}
 
 {% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Add Question Paper</h1>
+        <p class="text-slate-500">Create a new question paper for your exams</p>
+    </div>
 
-<div class="page-header">
-    <h1>Add Question Paper</h1>
-    <p class="subtitle">Create a new question paper for your exams</p>
-</div>
-
-<div class="form-card">
-    <form method="POST" action="{% url 'faculty-add_question_paper' %}">
-        <div class="form-grid">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <form method="POST" action="{% url 'faculty-add_question_paper' %}" class="space-y-6">
             {% csrf_token %}
-            {{ examform.as_p }}
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn primary">Submit</button>
-        </div>
-    </form>
+            
+            {% for field in examform %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                    <p class="mt-1 text-xs text-slate-500">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                    <div class="mt-1 text-sm text-red-500">{{ field.errors|striptags }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="flex justify-end pt-4">
+                <button type="submit" class="px-6 py-2.5 bg-primary hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-save"></i>
+                    Save Question Paper
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-
-<style>
-.form-card {
-    background: var(--bg-card);
-    padding: 28px;
-    border-radius: 18px;
-    box-shadow: 0 12px 28px rgba(15,23,42,0.08);
-    max-width: 600px;
-}
-
-.form-grid {
-    display: grid;
-    gap: 20px;
-}
-
-label {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--text-dark);
-    display: block;
-}
-
-input, select, textarea {
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    font-size: 14px;
-    background: #fff;
-    width: 100%;
-}
-
-input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-}
-
-.form-actions {
-    margin-top: 24px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn {
-    padding: 12px 18px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-}
-
-.btn.primary {
-    background: var(--accent);
-    color: #fff;
-}
-</style>
-
 {% endblock %}

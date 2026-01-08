@@ -2,76 +2,44 @@
 {% block title %}View Students{% endblock %}
 
 {% block content %}
-
-<div class="page-header">
-    <h1>Students</h1>
-    <p class="subtitle">View registered students and their exam participation</p>
-</div>
-
-<div class="table-card">
-    {% if students %}
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Student Name</th>
-                <th>Exams Attended</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for key, values in students.items %}
-            <tr>
-                <td>{{ key }}</td>
-                <td>{{ values }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state">
-        <i class="fa-solid fa-users"></i>
-        <p>No students found</p>
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Students</h1>
+        <p class="text-slate-500">View registered students and their exam participation</p>
     </div>
-    {% endif %}
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {% if students %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-4">Student Name</th>
+                        <th class="px-6 py-4">Exams Attended</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for key, values in students.items %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ key }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ values }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center text-slate-500">
+            <div class="flex flex-col items-center justify-center">
+                <i class="fa-solid fa-users text-4xl text-slate-300 mb-3"></i>
+                <p>No students found</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
-
-<style>
-.table-card {
-    background: var(--bg-card);
-    padding: 22px;
-    border-radius: 18px;
-    box-shadow: 0 10px 24px rgba(15,23,42,0.08);
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table th {
-    text-align: left;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    padding-bottom: 12px;
-}
-
-.data-table td {
-    padding: 14px 0;
-    border-top: 1px solid var(--border);
-    font-size: 14px;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-muted);
-}
-
-.empty-state i {
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.5;
-}
-</style>
-
 {% endblock %}

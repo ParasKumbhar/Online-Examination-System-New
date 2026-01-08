@@ -1,181 +1,59 @@
+{% extends 'base_auth.html' %}
 {% load static %}
-{% include 'base_auth.html' %}
+
+{% block title %}Faculty Registration - ExamPro{% endblock %}
 
 {% block body %}
-
-<style>
-* {
-    color: #0f172a;
-}
-
-body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.auth-container {
-    background: #fff;
-    border-radius: 18px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    padding: 40px;
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.auth-header {
-    text-align: center;
-    margin-bottom: 32px;
-}
-
-.auth-header h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 8px;
-}
-
-.auth-header p {
-    color: #64748b;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #0f172a;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="file"],
-select,
-textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    font-size: 14px;
-    background: #fff;
-    transition: border-color 0.2s ease;
-}
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="file"]:focus,
-select:focus,
-textarea:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-}
-
-.btn {
-    width: 100%;
-    padding: 14px;
-    background: #2563eb;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.btn:hover {
-    background: #1d4ed8;
-}
-
-.auth-links {
-    text-align: center;
-    margin-top: 24px;
-}
-
-.auth-links a {
-    color: #2563eb;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.auth-links a:hover {
-    text-decoration: underline;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-@media (max-width: 600px) {
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-
-<div class="auth-container">
-    <div class="auth-header">
-        <h1>Faculty Registration</h1>
-        <p>Create your faculty account</p>
+<div class="p-8">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Faculty Registration</h1>
+        <p class="text-slate-500">Create your teaching account</p>
     </div>
 
-    <form action="{% url 'faculty-register' %}" method="post" enctype="multipart/form-data">
+    <form action="{% url 'faculty-register' %}" method="post" enctype="multipart/form-data" class="space-y-4">
         {% csrf_token %}
-        {% include 'partials/_messages.html' %}
 
-        <div class="form-group">
-            <label for="id_username">Username</label>
+        <div>
+            <label for="id_username" class="block text-sm font-medium text-slate-700 mb-1">Username</label>
             {{ faculty_form.username }}
         </div>
 
-        <div class="form-group">
-            <label for="id_email">Email</label>
+        <div>
+            <label for="id_email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
             {{ faculty_form.email }}
         </div>
 
-        <div class="form-group">
-            <label for="id_password">Password</label>
+        <div>
+            <label for="id_password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
             {{ faculty_form.password }}
         </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="id_address">Address</label>
-                {{ faculty_info_form.address }}
-            </div>
-            <div class="form-group">
-                <label for="id_subject">Subject</label>
-                {{ faculty_info_form.subject }}
-            </div>
+        <div>
+            <label for="id_address" class="block text-sm font-medium text-slate-700 mb-1">Address</label>
+            {{ faculty_info_form.address }}
+        </div>
+        
+        <div>
+            <label for="id_subject" class="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+            {{ faculty_info_form.subject }}
         </div>
 
-        <div class="form-group">
-            <label for="id_picture">Profile Picture</label>
+        <div>
+            <label for="id_picture" class="block text-sm font-medium text-slate-700 mb-1">Profile Picture</label>
             {{ faculty_info_form.picture }}
         </div>
 
-        <button type="submit" class="btn">Register</button>
+        <button type="submit" 
+                class="w-full py-3 px-4 bg-primary hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition duration-200 mt-6">
+            Register
+        </button>
     </form>
 
-    <div class="auth-links">
-        <a href="{% url 'faculty-login' %}">Already have an account? Login</a>
+    <div class="mt-6 text-center text-sm">
+        <p class="text-slate-500">
+            Already have an account? 
+            <a href="{% url 'faculty-login' %}" class="text-primary hover:text-indigo-700 font-medium hover:underline">Login</a>
+        </p>
     </div>
 </div>
-
-<script src="{% static 'js/register.js' %}" type="text/javascript"></script>
-
 {% endblock %}

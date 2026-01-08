@@ -2,154 +2,84 @@
 {% block title %}Add Questions{% endblock %}
 
 {% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Add New Question</h1>
+        <p class="text-slate-500">Create questions for your question papers</p>
+    </div>
 
-<div class="page-header">
-    <h1>Add New Question</h1>
-    <p class="subtitle">Create questions for your question papers</p>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <form method="POST" action="{% url 'faculty-addquestions' %}" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Question Text -->
+            <div>
+                <label for="{{ examform.question.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">
+                    Question Text
+                </label>
+                {{ examform.question }}
+                {% if examform.question.errors %}
+                    <div class="mt-1 text-sm text-red-500">{{ examform.question.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Options Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ examform.optionA.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">Option A</label>
+                    {{ examform.optionA }}
+                    {% if examform.optionA.errors %}
+                        <div class="mt-1 text-sm text-red-500">{{ examform.optionA.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ examform.optionB.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">Option B</label>
+                    {{ examform.optionB }}
+                    {% if examform.optionB.errors %}
+                        <div class="mt-1 text-sm text-red-500">{{ examform.optionB.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ examform.optionC.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">Option C</label>
+                    {{ examform.optionC }}
+                    {% if examform.optionC.errors %}
+                        <div class="mt-1 text-sm text-red-500">{{ examform.optionC.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ examform.optionD.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">Option D</label>
+                    {{ examform.optionD }}
+                    {% if examform.optionD.errors %}
+                        <div class="mt-1 text-sm text-red-500">{{ examform.optionD.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Answer and Marks -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ examform.answer.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">Correct Answer</label>
+                    {{ examform.answer }}
+                    {% if examform.answer.errors %}
+                        <div class="mt-1 text-sm text-red-500">{{ examform.answer.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ examform.max_marks.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">Max Marks</label>
+                    {{ examform.max_marks }}
+                    {% if examform.max_marks.errors %}
+                        <div class="mt-1 text-sm text-red-500">{{ examform.max_marks.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4">
+                <button type="submit" class="px-6 py-2.5 bg-primary hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    Add Question
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-
-<div class="form-card">
-    <form method="POST" action="{% url 'faculty-addquestions' %}">
-        {% csrf_token %}
-
-        <div class="form-group">
-            <label for="{{ examform.question.id_for_label }}">Question</label>
-            <textarea name="{{ examform.question.name }}" id="{{ examform.question.id_for_label }}" class="form-control" rows="4" placeholder="Enter the question here..." required>{{ examform.question.value|default_if_none:'' }}</textarea>
-            {% if examform.question.errors %}
-                <div class="text-danger">{{ examform.question.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="{{ examform.optionA.id_for_label }}">Option A</label>
-                <input type="text" name="{{ examform.optionA.name }}" id="{{ examform.optionA.id_for_label }}" class="form-control" placeholder="Enter option A" value="{{ examform.optionA.value|default_if_none:'' }}" required>
-                {% if examform.optionA.errors %}
-                    <div class="text-danger">{{ examform.optionA.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="{{ examform.optionB.id_for_label }}">Option B</label>
-                <input type="text" name="{{ examform.optionB.name }}" id="{{ examform.optionB.id_for_label }}" class="form-control" placeholder="Enter option B" value="{{ examform.optionB.value|default_if_none:'' }}" required>
-                {% if examform.optionB.errors %}
-                    <div class="text-danger">{{ examform.optionB.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="{{ examform.optionC.id_for_label }}">Option C</label>
-                <input type="text" name="{{ examform.optionC.name }}" id="{{ examform.optionC.id_for_label }}" class="form-control" placeholder="Enter option C" value="{{ examform.optionC.value|default_if_none:'' }}" required>
-                {% if examform.optionC.errors %}
-                    <div class="text-danger">{{ examform.optionC.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="{{ examform.optionD.id_for_label }}">Option D</label>
-                <input type="text" name="{{ examform.optionD.name }}" id="{{ examform.optionD.id_for_label }}" class="form-control" placeholder="Enter option D" value="{{ examform.optionD.value|default_if_none:'' }}" required>
-                {% if examform.optionD.errors %}
-                    <div class="text-danger">{{ examform.optionD.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="{{ examform.answer.id_for_label }}">Correct Answer</label>
-                {{ examform.answer }}
-                {% if examform.answer.errors %}
-                    <div class="text-danger">{{ examform.answer.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="{{ examform.max_marks.id_for_label }}">Max Marks</label>
-                <input type="number" name="{{ examform.max_marks.name }}" id="{{ examform.max_marks.id_for_label }}" class="form-control" placeholder="Marks" value="{{ examform.max_marks.value|default_if_none:'' }}" required>
-                {% if examform.max_marks.errors %}
-                    <div class="text-danger">{{ examform.max_marks.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn primary">Add Question</button>
-        </div>
-    </form>
-</div>
-
-<style>
-.form-card {
-    background: var(--bg-card);
-    padding: 28px;
-    border-radius: 18px;
-    box-shadow: 0 12px 28px rgba(15,23,42,0.08);
-    max-width: 800px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-label {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--text-dark);
-    display: block;
-}
-
-.form-control {
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    font-size: 14px;
-    background: #fff;
-    width: 100%;
-}
-
-.form-control:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
-}
-
-.text-danger {
-    color: #dc2626;
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-.form-actions {
-    margin-top: 24px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn {
-    padding: 12px 18px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-}
-
-.btn.primary {
-    background: var(--accent);
-    color: #fff;
-}
-
-@media (max-width: 600px) {
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-
 {% endblock %}

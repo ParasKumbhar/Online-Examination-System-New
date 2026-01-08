@@ -1,90 +1,87 @@
 {% extends "base.html" %}
-{% block title %}Exam{% endblock %}
+{% block title %}Exam: {{ exam.name }} - ExamPro{% endblock %}
 
 {% block content %}
-
-<div class="exam-container">
-
-  <!-- EXAM HEADER -->
-  <div class="exam-header">
-    <div>
-      <h1>Database Management Systems</h1>
-      <p class="subtitle">Answer all questions carefully</p>
+<div class="max-w-4xl mx-auto space-y-6" x-data="examTimer({{ mins }}, {{ secs }})">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-4 z-10">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">{{ exam.name }}</h1>
+            <p class="text-slate-500 text-sm">{{ exam.question_paper.qPaperTitle }}</p>
+        </div>
+        <div class="flex items-center gap-3 px-4 py-2 bg-red-50 text-red-700 rounded-full font-mono font-bold border border-red-100 shadow-sm">
+            <i class="fa-solid fa-clock animate-pulse"></i>
+            <span x-text="formatTime(timeRemaining)"></span>
+        </div>
     </div>
-    <div class="timer">
-      <i class="fa-solid fa-clock"></i>
-      <span>01:25:40</span>
-    </div>
-  </div>
 
-  <!-- QUESTION CARD -->
-  <div class="exam-card">
-    <h3>Q1. What is normalization?</h3>
+    <form method="post" action="" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" name="paper" value="{{ exam.name }}">
+        
+        {% for question in question_list %}
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50">
+                <h3 class="font-semibold text-slate-900 flex gap-3">
+                    <span class="text-slate-400">Q{{ forloop.counter }}.</span>
+                    <span>{{ question.question }}</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-2 text-right">Marks: {{ question.max_marks }}</p>
+            </div>
+            
+            <div class="p-6 space-y-3">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                    <input type="radio" name="{{ question.question }}" value="{{ question.optionA }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionA }}</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                    <input type="radio" name="{{ question.question }}" value="{{ question.optionB }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionB }}</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                    <input type="radio" name="{{ question.question }}" value="{{ question.optionC }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionC }}</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                    <input type="radio" name="{{ question.question }}" value="{{ question.optionD }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionD }}</span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
 
-    <div class="options">
-      <label><input type="radio" name="q1"> Reducing redundancy</label>
-      <label><input type="radio" name="q1"> Increasing storage</label>
-      <label><input type="radio" name="q1"> Improving UI</label>
-      <label><input type="radio" name="q1"> None of the above</label>
-    </div>
-  </div>
-
-  <!-- ACTIONS -->
-  <div class="exam-actions">
-    <button class="btn secondary">Previous</button>
-    <button class="btn primary">Next</button>
-    <button class="btn outline">Submit Exam</button>
-  </div>
-
+        <div class="flex justify-end pt-6">
+            <button type="submit" class="px-8 py-3 bg-primary hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transform transition hover:-translate-y-1">
+                Submit Exam
+            </button>
+        </div>
+    </form>
 </div>
 
-<style>
-.exam-container {
-  max-width: 900px;
-  margin: auto;
-}
-
-.exam-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.timer {
-  background: #fee2e2;
-  color: #991b1b;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-weight: 600;
-}
-
-.exam-card {
-  background: var(--bg-card);
-  padding: 24px;
-  border-radius: 18px;
-  box-shadow: 0 12px 28px rgba(15,23,42,0.08);
-}
-
-.options {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.options label {
-  background: var(--bg-main);
-  padding: 12px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.exam-actions {
-  margin-top: 24px;
-  display: flex;
-  justify-content: space-between;
-}
-</style>
-
+<script>
+    function examTimer(mins, secs) {
+        return {
+            timeRemaining: (mins * 60) + secs,
+            init() {
+                this.timer = setInterval(() => {
+                    if (this.timeRemaining > 0) {
+                        this.timeRemaining--;
+                    } else {
+                        clearInterval(this.timer);
+                        alert("Time is up! Submitting exam automatically.");
+                        document.querySelector('form').submit();
+                    }
+                }, 1000);
+            },
+            formatTime(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+        }
+    }
+</script>
 {% endblock %}

@@ -19,16 +19,16 @@ class Question_DB(models.Model):
 
 
 class QForm(ModelForm):
-    answer = forms.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')], widget=forms.Select(attrs={'class': 'form-select'}))
+    answer = forms.ChoiceField(choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')], widget=forms.Select(attrs={'class': 'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}))
     class Meta:
         model = Question_DB
         fields = '__all__'
         exclude = ['qno', 'professor']
         widgets = {
-            'question': forms.Textarea(attrs = {'class':'form-control', 'rows': 4}),
-            'optionA': forms.TextInput(attrs = {'class':'form-control'}),
-            'optionB': forms.TextInput(attrs = {'class':'form-control'}),
-            'optionC': forms.TextInput(attrs = {'class':'form-control'}),
-            'optionD': forms.TextInput(attrs = {'class':'form-control'}),
-            'max_marks': forms.NumberInput(attrs = {'class':'form-control'}),
+            'question': forms.Textarea(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary', 'rows': 4}),
+            'optionA': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
+            'optionB': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
+            'optionC': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
+            'optionD': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
+            'max_marks': forms.NumberInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
         }

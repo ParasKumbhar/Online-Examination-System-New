@@ -110,7 +110,12 @@ class LoginView(View):
 		return render(request,'faculty/login.html')
 
 class LogoutView(View):
-	def post(self,request):
-		auth.logout(request)
-		messages.success(request,'Logged Out')
-		return redirect('faculty-login')
+    def get(self, request):
+        auth.logout(request)
+        messages.success(request, 'Logged Out')
+        return redirect('faculty-login')
+
+    def post(self,request):
+        auth.logout(request)
+        messages.success(request,'Logged Out')
+        return redirect('faculty-login')

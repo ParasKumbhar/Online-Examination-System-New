@@ -1,285 +1,209 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Online Examination System{% endblock %}</title>
 
     <!-- Google Font: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        secondary: '#64748b', // Slate 500
+                        success: '#22c55e',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        dark: '#0f172a',
+                        light: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
     {% block extra_css %}{% endblock %}
 </head>
+<body class="flex h-screen overflow-hidden bg-slate-50 text-slate-800 font-sans antialiased" x-data="{ sidebarOpen: false, profileOpen: false }">
 
-<body>
+    <!-- Mobile Overlay -->
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity 
+         class="fixed inset-0 z-20 bg-black/50 lg:hidden"></div>
 
-<div class="app-layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <span>ExamPro</span>
+    <!-- Sidebar -->
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+           class="fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0 shadow-lg lg:shadow-none flex flex-col">
+        
+        <!-- Logo -->
+        <div class="flex items-center justify-center h-16 border-b border-slate-200 bg-white">
+            <a href="/" class="flex items-center gap-2 text-2xl font-bold text-primary">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>ExamPro</span>
+            </a>
         </div>
 
-        <nav class="sidebar-menu">
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
             {% if user.groups.all.0.name == 'Professor' %}
                 <!-- Faculty Sidebar -->
-                <a href="{% url 'faculty-index' %}" class="menu-item">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Dashboard</span>
+                <div class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Dashboard</div>
+                <a href="{% url 'faculty-index' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-house w-6 text-center group-hover:text-primary transition-colors"></i>
+                    <span>Overview</span>
                 </a>
 
-                <div class="menu-section">Examinations</div>
-                <a href="{% url 'view_exams' %}" class="menu-item">
-                    <i class="fa-solid fa-file-circle-plus"></i>
+                <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Examinations</div>
+                <a href="{% url 'view_exams' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-plus-circle w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Create Exam</span>
                 </a>
-                <a href="{% url 'faculty-addquestions' %}" class="menu-item">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    <span>Questions</span>
+                <a href="{% url 'faculty-add_question_paper' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-file-pen w-6 text-center group-hover:text-primary transition-colors"></i>
+                    <span>Create Question Paper</span>
+                </a>
+                <a href="{% url 'faculty-addquestions' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-list-check w-6 text-center group-hover:text-primary transition-colors"></i>
+                    <span>Question Bank</span>
                 </a>
 
-                <div class="menu-section">Management</div>
-                <a href="{% url 'faculty-student' %}" class="menu-item">
-                    <i class="fa-solid fa-users"></i>
+                <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Management</div>
+                <a href="{% url 'faculty-student' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-users w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Students</span>
                 </a>
-                <a href="{% url 'faculty-result' %}" class="menu-item">
-                    <i class="fa-solid fa-chart-column"></i>
-                    <span>Results</span>
+                <a href="{% url 'faculty-result' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-chart-bar w-6 text-center group-hover:text-primary transition-colors"></i>
+                    <span>Results & Reports</span>
                 </a>
+
             {% elif user.groups.all.0.name == 'Student' %}
                 <!-- Student Sidebar -->
-                <a href="{% url 'index' %}" class="menu-item">
-                    <i class="fa-solid fa-house"></i>
+                <div class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Student Portal</div>
+                <a href="{% url 'index' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-house w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Dashboard</span>
                 </a>
 
-                <div class="menu-section">Exams</div>
-                <a href="{% url 'view_exams_student' %}" class="menu-item">
-                    <i class="fa-solid fa-calendar-days"></i>
+                <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Exams</div>
+                <a href="{% url 'view_exams_student' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-calendar-alt w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Upcoming Exams</span>
                 </a>
-                <a href="{% url 'student-previous' %}" class="menu-item">
-                    <i class="fa-solid fa-history"></i>
-                    <span>Previous Exams</span>
+                <a href="{% url 'student-previous' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-clock-rotate-left w-6 text-center group-hover:text-primary transition-colors"></i>
+                    <span>Exam History</span>
+                </a>
+                <a href="{% url 'student-results' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-award w-6 text-center group-hover:text-primary transition-colors"></i>
+                    <span>My Results</span>
                 </a>
 
-                <div class="menu-section">Account</div>
-                <a href="{% url 'email-student-pref' %}" class="menu-item">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Settings</span>
+                <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Account</div>
+                <a href="{% url 'email-student-pref' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                    <i class="fa-solid fa-user-gear w-6 text-center group-hover:text-primary transition-colors"></i>
+                    <span>Profile Settings</span>
                 </a>
+            {% else %}
+                <div class="px-4 py-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+                    Please log in to view menu.
+                </div>
             {% endif %}
         </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-slate-200">
+            <a href="{% if user.groups.all.0.name == 'Professor' %}{% url 'faculty-logout' %}{% else %}{% url 'logout' %}{% endif %}" 
+               class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </a>
+        </div>
     </aside>
 
-    <!-- MAIN -->
-    <main class="main-content">
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Topbar -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-10">
+            <div class="flex items-center gap-4">
+                <button @click="sidebarOpen = true" class="lg:hidden p-2 text-slate-500 hover:text-slate-700 focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-xl font-semibold text-slate-800 hidden sm:block">
+                    {% block page_title %}{% endblock %}
+                </h1>
+            </div>
 
-        <!-- TOP BAR -->
-        <header class="topbar">
-            <button class="sidebar-toggle" id="toggleBtn">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-
-            <div class="topbar-right">
-                <span class="role-badge">
-                    {% if user.groups.all.0.name == 'Professor' %}
-                        Faculty Panel
-                    {% elif user.groups.all.0.name == 'Student' %}
-                        Student Panel
-                    {% endif %}
-                </span>
-                <div class="user-menu">
-                    <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
-                    <a href="{% if user.groups.all.0.name == 'Professor' %}{% url 'faculty-logout' %}{% else %}{% url 'logout' %}{% endif %}" class="logout-btn">
-                        <i class="fa-solid fa-sign-out-alt"></i>
-                    </a>
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex flex-col items-end">
+                    <span class="text-sm font-semibold text-slate-700">{{ user.get_full_name|default:user.username }}</span>
+                    <span class="text-xs text-slate-500">
+                        {% if user.groups.all.0.name == 'Professor' %}Faculty{% else %}Student{% endif %}
+                    </span>
+                </div>
+                <div class="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+                    {{ user.username.0|upper }}
                 </div>
             </div>
         </header>
 
-        <!-- PAGE CONTENT -->
-        <section class="page-content">
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 lg:p-8">
+            {% if messages %}
+                <div class="mb-6 space-y-2">
+                    {% for message in messages %}
+                        <div class="p-4 rounded-lg flex items-center gap-3 shadow-sm
+                            {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+                            {% elif message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
+                            {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700 border border-yellow-200
+                            {% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                            <i class="fa-solid 
+                                {% if message.tags == 'error' %}fa-circle-exclamation
+                                {% elif message.tags == 'success' %}fa-check-circle
+                                {% elif message.tags == 'warning' %}fa-triangle-exclamation
+                                {% else %}fa-circle-info{% endif %}"></i>
+                            <p class="text-sm font-medium">{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block body %}{% endblock %}
             {% block content %}{% endblock %}
-        </section>
+        </main>
+    </div>
 
-    </main>
-
-</div>
-
-<!-- GLOBAL STYLES -->
-<style>
-:root {
-    --bg-main: #f5f7fb;
-    --bg-sidebar: #0f172a;
-    --bg-card: #ffffff;
-    --accent: #2563eb;
-    --text-dark: #0f172a;
-    --text-muted: #64748b;
-    --border: #e5e7eb;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Inter", sans-serif;
-}
-
-body {
-    background: var(--bg-main);
-    color: var(--text-dark);
-}
-
-.app-layout {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* SIDEBAR */
-.sidebar {
-    width: 260px;
-    background: var(--bg-sidebar);
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    transition: width 0.3s ease;
-    position: relative;
-}
-
-.sidebar.collapsed {
-    width: 70px;
-}
-
-.sidebar.collapsed .sidebar-brand span,
-.sidebar.collapsed .menu-item span,
-.sidebar.collapsed .menu-section {
-    display: none;
-}
-
-.sidebar.collapsed .menu-item {
-    justify-content: center;
-    padding: 12px;
-}
-
-.sidebar-brand {
-    padding: 22px;
-    font-size: 20px;
-    font-weight: 700;
-    text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.sidebar-menu {
-    padding: 12px;
-}
-
-.menu-section {
-    margin: 18px 12px 6px;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #94a3b8;
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    margin-bottom: 4px;
-    color: #e5e7eb;
-    text-decoration: none;
-    border-radius: 10px;
-    transition: background 0.2s ease;
-}
-
-.menu-item:hover {
-    background: rgba(255,255,255,0.08);
-}
-
-/* MAIN */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-/* TOP BAR */
-.topbar {
-    height: 64px;
-    background: #fff;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-}
-
-.sidebar-toggle {
-    border: none;
-    background: none;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.role-badge {
-    background: var(--bg-main);
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.user-menu {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.user-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-dark);
-}
-
-.logout-btn {
-    color: var(--text-muted);
-    text-decoration: none;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background 0.2s ease;
-}
-
-.logout-btn:hover {
-    background: var(--bg-main);
-    color: var(--text-dark);
-}
-
-/* PAGE */
-.page-content {
-    padding: 24px;
-}
-</style>
-
-<!-- JS -->
-<script>
-const toggleBtn = document.getElementById("toggleBtn");
-const sidebar = document.getElementById("sidebar");
-
-toggleBtn.addEventListener("click", () => {
-    sidebar.classList.toggle("collapsed");
-});
-</script>
-
+    <!-- Scripts -->
+    <script>
+        // Common interactions can go here
+    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

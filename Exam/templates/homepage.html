@@ -4,250 +4,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Examination System</title>
+    <title>Online Examination System - ExamPro</title>
 
     <!-- Google Font: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <style>
-        :root {
-            --bg-main: #f5f7fb;
-            --bg-card: #ffffff;
-            --accent: #2563eb;
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --border: #e5e7eb;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Inter", sans-serif;
-        }
-
-        body {
-            background: var(--bg-main);
-            color: var(--text-dark);
-            min-height: 100vh;
-        }
-
-        .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            padding: 80px 20px;
-            text-align: center;
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        .hero p {
-            font-size: 20px;
-            margin-bottom: 40px;
-            opacity: 0.9;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 14px 28px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .btn.primary {
-            background: #fff;
-            color: var(--accent);
-        }
-
-        .btn.primary:hover {
-            background: #f8fafc;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-
-        .btn.secondary {
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .btn.secondary:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-        }
-
-        .features {
-            padding: 80px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .features h2 {
-            text-align: center;
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 60px;
-            color: var(--text-dark);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            padding: 32px;
-            border-radius: 18px;
-            box-shadow: 0 12px 28px rgba(15,23,42,0.08);
-            text-align: center;
-        }
-
-        .feature-icon {
-            width: 64px;
-            height: 64px;
-            background: var(--accent);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 24px;
-            margin: 0 auto 20px;
-        }
-
-        .feature-card h3 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .feature-card p {
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        .about {
-            background: var(--bg-card);
-            padding: 80px 20px;
-        }
-
-        .about-content {
-            max-width: 800px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .about h2 {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-
-        .about p {
-            font-size: 18px;
-            line-height: 1.8;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 32px;
-            }
-
-            .hero p {
-                font-size: 16px;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5', // Indigo 600
+                        secondary: '#64748b', // Slate 500
+                    }
+                }
             }
         }
-    </style>
+    </script>
 </head>
-<body>
-    <!-- HERO SECTION -->
-    <section class="hero">
-        <h1>Welcome to ExamPro</h1>
-        <p>Advanced Online Examination System for Modern Education</p>
-        <div class="hero-buttons">
-            <a href="{% url 'faculty-login' %}" class="btn primary">
-                <i class="fa-solid fa-user-tie"></i> Faculty Portal
-            </a>
-            <a href="{% url 'login' %}" class="btn secondary">
-                <i class="fa-solid fa-user-graduate"></i> Student Portal
-            </a>
-        </div>
-    </section>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
 
-    <!-- FEATURES SECTION -->
-    <section class="features">
-        <h2>Key Features</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-shield-alt"></i>
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center gap-2 text-2xl font-bold text-primary">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>ExamPro</span>
+                    </a>
                 </div>
-                <h3>Secure Exams</h3>
-                <p>Advanced security measures to prevent cheating and ensure fair examinations.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-chart-line"></i>
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'login' %}" class="text-slate-600 hover:text-primary font-medium transition-colors">Student Login</a>
+                    <a href="{% url 'faculty-login' %}" class="px-4 py-2 bg-primary hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm">
+                        Faculty Login
+                    </a>
                 </div>
-                <h3>Real-time Results</h3>
-                <p>Instant evaluation and comprehensive result analysis for better insights.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-clock"></i>
-                </div>
-                <h3>Flexible Scheduling</h3>
-                <p>Schedule exams at your convenience with automated reminders and notifications.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-leaf"></i>
-                </div>
-                <h3>Eco-Friendly</h3>
-                <p>Reduce paper usage and contribute to environmental conservation.</p>
             </div>
         </div>
-    </section>
+    </nav>
 
-    <!-- ABOUT SECTION -->
-    <section class="about">
-        <div class="about-content">
-            <h2>About ExamPro</h2>
-            <p>Our Online Examination System addresses the challenges faced by students and teachers in conducting exams remotely. Teachers can create, schedule, and manage examinations effortlessly, while students can take exams securely from anywhere.</p>
-            <p>The system features auto-evaluation, speed, and accuracy, making it ideal for competitive examinations. By going digital, we help reduce the environmental impact of traditional paper-based testing.</p>
+    <!-- Hero Section -->
+    <div class="bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+            <div class="text-center max-w-3xl mx-auto">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight mb-6">
+                    Streamline Your <span class="text-primary">Assessments</span>
+                </h1>
+                <p class="text-lg md:text-xl text-slate-500 mb-10 leading-relaxed">
+                    A secure, reliable, and user-friendly online examination platform for educational institutions. Conduct exams with confidence.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'register' %}" class="px-8 py-4 bg-primary hover:bg-indigo-700 text-white text-lg font-semibold rounded-xl transition-all shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform hover:-translate-y-1">
+                        Get Started as Student
+                    </a>
+                    <a href="{% url 'faculty-register' %}" class="px-8 py-4 bg-white border-2 border-slate-200 hover:border-primary text-slate-700 hover:text-primary text-lg font-semibold rounded-xl transition-all">
+                        Faculty Registration
+                    </a>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
+
+    <!-- Features Section -->
+    <div class="py-20 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">Why Choose ExamPro?</h2>
+                <p class="text-slate-500 max-w-2xl mx-auto">Our platform offers a comprehensive suite of tools designed to make online testing efficient and secure.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center text-primary text-2xl mb-6">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Secure Environment</h3>
+                    <p class="text-slate-500 leading-relaxed">
+                        Built-in security measures to prevent unauthorized access and ensure the integrity of every examination.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center text-primary text-2xl mb-6">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Real-time Results</h3>
+                    <p class="text-slate-500 leading-relaxed">
+                        Instant grading and result generation save time for faculty and provide immediate feedback to students.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                    <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center text-primary text-2xl mb-6">
+                        <i class="fa-solid fa-mobile-screen"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-3">Mobile Friendly</h3>
+                    <p class="text-slate-500 leading-relaxed">
+                        Responsive design allows students to take exams on any device, anywhere, at any time.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-slate-500">
+                &copy; {% now "Y" %} ExamPro. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
 </body>
 </html>

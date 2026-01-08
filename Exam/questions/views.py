@@ -11,20 +11,18 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
 def has_group(user, group_name):
-    group = Group.objects.get(name=group_name)
-    return True if group in user.groups.all() else False
+    return user.groups.filter(name=group_name).exists()
 
 @login_required(login_url='faculty-login')
 def view_exams_prof(request):
     prof = request.user
-    prof_user = User.objects.get(username=prof)
     permissions = False
     if prof:
         permissions = has_group(prof,"Professor")
     if permissions:
-        new_Form = ExamForm(prof_user)
+        new_Form = ExamForm(prof)
         if request.method == 'POST' and permissions:
-            form = ExamForm(prof_user,request.POST)
+            form = ExamForm(prof,request.POST)
             if form.is_valid():
                 exam = form.save(commit=False)
                 exam.professor = prof
@@ -42,17 +40,16 @@ def view_exams_prof(request):
 @login_required(login_url='faculty-login')
 def add_question_paper(request):
     prof = request.user
-    prof_user = User.objects.get(username=prof)
     permissions = False
     if prof:
         permissions = has_group(prof,"Professor")
     if permissions:
-        new_Form = QPForm(prof_user)
+        new_Form = QPForm(prof)
         if request.method == 'POST' and permissions:
-            form = QPForm(prof_user,request.POST)
+            form = QPForm(prof,request.POST)
             if form.is_valid():
                 exam = form.save(commit=False)
-                exam.professor = prof_user
+                exam.professor = prof
                 exam.save()
                 form.save_m2m()
                 return redirect('faculty-add_question_paper')
@@ -67,7 +64,6 @@ def add_question_paper(request):
 @login_required(login_url='faculty-login')
 def add_questions(request):
     prof = request.user
-    prof_user = User.objects.get(username=prof)
     permissions = False
     if prof:
         permissions = has_group(prof,"Professor")
@@ -77,7 +73,7 @@ def add_questions(request):
             form = QForm(request.POST)
             if form.is_valid():
                 exam = form.save(commit=False)
-                exam.professor = prof_user
+                exam.professor = prof
                 exam.save()
                 form.save_m2m()
                 return redirect('faculty-addquestions')
