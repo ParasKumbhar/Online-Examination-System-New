@@ -9,6 +9,9 @@ from questions.questionpaper_models import QPForm
 from questions.question_models import QForm
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseForbidden
+from .models import Exam_Model, ExamForm
 
 def has_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
@@ -55,8 +58,10 @@ def add_question_paper(request):
                 return redirect('faculty-add_question_paper')
 
         exams = Exam_Model.objects.filter(professor=prof)
+        # list existing question papers for this professor
+        qpapers = Question_Paper.objects.filter(professor=prof)
         return render(request, 'exam/addquestionpaper.html', {
-            'exams': exams, 'examform': new_Form, 'prof': prof,
+            'exams': exams, 'examform': new_Form, 'prof': prof, 'qpapers': qpapers,
         })
     else:
         return redirect('view_exams_student')
@@ -260,4 +265,84 @@ def result(request,id):
     student = request.user
     exam = Exam_Model.objects.get(pk=id)
     score = StuExam_DB.objects.get(student=student,examname=exam.name,qpaper=exam.question_paper).score
-    return render(request,'exam/result.html',{'exam':exam,"score":score})
+    # Calculate SVG dashoffset for circular progress (stroke-dasharray = 440)
+    max_dash = 440
+    try:
+        total = float(exam.total_marks) if exam.total_marks else 0.0
+        ratio = float(score) / total if total > 0 else 0.0
+    except Exception:
+        ratio = 0.0
+    if ratio < 0:
+        ratio = 0.0
+    if ratio > 1:
+        ratio = 1.0
+    dashoffset = int(max_dash * (1 - ratio))
+
+    return render(request,'exam/result.html',{'exam':exam, "score":score, 'dashoffset': dashoffset})
+
+
+@login_required(login_url='faculty-login')
+def edit_question_paper(request, id):
+    prof = request.user
+    qp = get_object_or_404(Question_Paper, pk=id)
+    if qp.professor != prof:
+        return HttpResponseForbidden("You don't have permission to edit this question paper.")
+
+    if request.method == 'POST':
+        form = QPForm(prof, request.POST, instance=qp)
+        if form.is_valid():
+            form.save()
+            return redirect('faculty-add_question_paper')
+    else:
+        form = QPForm(prof, instance=qp)
+
+    return render(request, 'exam/editquestionpaper.html', {'examform': form, 'qp': qp, 'prof': prof})
+
+
+@login_required(login_url='faculty-login')
+def delete_question_paper(request, id):
+    prof = request.user
+    qp = get_object_or_404(Question_Paper, pk=id)
+    if qp.professor != prof:
+        return HttpResponseForbidden("You don't have permission to delete this question paper.")
+
+    if request.method == 'POST':
+        qp.delete()
+        return redirect('faculty-add_question_paper')
+
+    return render(request, 'exam/delete_qpaper.html', {'qp': qp})
+
+
+@login_required(login_url='faculty-login')
+def edit_exam(request, id):
+    prof = request.user
+    exam = get_object_or_404(Exam_Model, pk=id)
+    if exam.professor != prof:
+        return HttpResponseForbidden("You don't have permission to edit this exam.")
+
+    if request.method == 'POST':
+        form = ExamForm(prof, request.POST, instance=exam)
+        if form.is_valid():
+            ex = form.save(commit=False)
+            ex.professor = prof
+            ex.save()
+            form.save_m2m()
+            return redirect('view_exams')
+    else:
+        form = ExamForm(prof, instance=exam)
+
+    return render(request, 'exam/editsingleexam.html', {'examform': form, 'exam': exam})
+
+
+@login_required(login_url='faculty-login')
+def delete_exam(request, id):
+    prof = request.user
+    exam = get_object_or_404(Exam_Model, pk=id)
+    if exam.professor != prof:
+        return HttpResponseForbidden("You don't have permission to delete this exam.")
+
+    if request.method == 'POST':
+        exam.delete()
+        return redirect('view_exams')
+
+    return render(request, 'exam/delete_exam.html', {'exam': exam})

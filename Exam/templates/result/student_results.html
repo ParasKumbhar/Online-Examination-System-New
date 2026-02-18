@@ -13,15 +13,15 @@
         <div class="p-6 border-b border-slate-100">
             <h2 class="text-xl font-bold text-slate-900 mb-6">{{ student.name }}</h2>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div class="bg-slate-50 p-4 rounded-lg text-center">
+                <div class="bg-slate-100 p-4 rounded-lg text-center">
                     <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">GPA</span>
                     <span class="block text-2xl font-bold text-primary">{{ gpa }}</span>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-lg text-center">
+                <div class="bg-slate-100 p-4 rounded-lg text-center">
                     <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">CGPA</span>
                     <span class="block text-2xl font-bold text-indigo-600">{{ cgpa }}</span>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-lg text-center">
+                <div class="bg-slate-100 p-4 rounded-lg text-center">
                     <span class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Class</span>
                     <span class="block text-2xl font-bold text-slate-700">{{ student_class }}</span>
                 </div>
@@ -33,7 +33,7 @@
             <h3 class="text-lg font-semibold text-slate-900 mb-4">Course Results</h3>
             <div class="overflow-x-auto rounded-lg border border-slate-200">
                 <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                    <thead class="bg-slate-100 text-slate-500 text-xs uppercase font-semibold">
                         <tr>
                             <th class="px-6 py-4">Course</th>
                             <th class="px-6 py-4">Semester</th>
@@ -42,7 +42,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         {% for result in results %}
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-100 transition-colors">
                             <td class="px-6 py-4 font-medium text-slate-900">{{ result.course.name }}</td>
                             <td class="px-6 py-4 text-slate-600">{{ result.semester }}</td>
                             <td class="px-6 py-4 font-semibold text-slate-900">{{ result.total_score }}</td>

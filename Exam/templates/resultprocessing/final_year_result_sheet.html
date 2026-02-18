@@ -9,7 +9,7 @@
             <h1 class="text-2xl font-bold text-slate-900">Final Year Result Sheet</h1>
             <p class="text-slate-500">Program: <span class="font-medium text-primary">{{ program.name }}</span></p>
         </div>
-        <button onclick="window.print()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2">
+        <button onclick="window.print()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-100 transition-colors shadow-sm flex items-center gap-2">
             <i class="fa-solid fa-print"></i>
             Print Report
         </button>
@@ -18,7 +18,7 @@
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left">
-                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                <thead class="bg-slate-100 text-slate-500 text-xs uppercase font-semibold">
                     <tr>
                         <th class="px-6 py-4">Student Name</th>
                         <th class="px-6 py-4">GPA</th>
@@ -28,7 +28,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     {% for result in final_year_results %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-100 transition-colors">
                         <td class="px-6 py-4 font-medium text-slate-900">{{ result.student.name }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ result.gpa }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ result.cgpa }}</td>

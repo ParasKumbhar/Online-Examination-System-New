@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Delete Exam{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900">Delete Exam</h1>
+        <p class="text-slate-500">Are you sure you want to delete the exam "{{ exam.name }}"? This action cannot be undone.</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="flex gap-4 justify-end">
+                <a href="{% url 'view_exams' %}" class="px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-100">Cancel</a>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

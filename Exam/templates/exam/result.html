@@ -14,10 +14,10 @@
             <div class="relative w-40 h-40 flex items-center justify-center">
                 <!-- Circular Progress Background -->
                 <svg class="w-full h-full transform -rotate-90">
-                    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-slate-100" />
+                    <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-slate-200" />
                     <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-primary" 
                             stroke-dasharray="440" 
-                            stroke-dashoffset="{{ score|add:0|default:0|widthratio:exam.total_marks|add:0|default:100:440 }}" 
+                            stroke-dashoffset="{{ dashoffset }}" 
                             stroke-linecap="round" />
                 </svg>
                 <!-- Score Text -->
@@ -29,13 +29,13 @@
             <p class="mt-4 text-lg font-medium text-slate-700">Your Score</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left bg-slate-50 p-6 rounded-xl border border-slate-100">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left bg-slate-200 p-6 rounded-xl border border-slate-300 shadow-sm">
             <div>
-                <p class="text-xs text-slate-500 uppercase font-semibold">Professor</p>
+                <p class="text-xs text-slate-600 uppercase font-semibold">Professor</p>
                 <p class="font-medium text-slate-900">{{ exam.professor }}</p>
             </div>
             <div>
-                <p class="text-xs text-slate-500 uppercase font-semibold">Date</p>
+                <p class="text-xs text-slate-600 uppercase font-semibold">Date</p>
                 <p class="font-medium text-slate-900">{{ exam.start_time|date:"F d, Y" }}</p>
             </div>
         </div>

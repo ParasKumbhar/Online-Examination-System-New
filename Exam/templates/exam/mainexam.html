@@ -20,21 +20,28 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                        <thead class="bg-slate-100 text-slate-500 text-xs uppercase font-semibold">
                             <tr>
                                 <th class="px-6 py-4">Name</th>
                                 <th class="px-6 py-4">Start Time</th>
                                 <th class="px-6 py-4">End Time</th>
                                 <th class="px-6 py-4">Paper</th>
+                                   <th class="px-6 py-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             {% for exam in exams %}
-                            <tr class="hover:bg-slate-50 transition-colors">
+                            <tr class="hover:bg-slate-100 transition-colors">
                                 <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
                                 <td class="px-6 py-4 text-slate-600">{{ exam.start_time }}</td>
                                 <td class="px-6 py-4 text-slate-600">{{ exam.end_time }}</td>
                                 <td class="px-6 py-4 text-slate-600">{{ exam.question_paper }}</td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="inline-flex items-center gap-2">
+                                            <a href="{% url 'faculty-edit_exam' exam.id %}" class="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md">Edit</a>
+                                            <a href="{% url 'faculty-delete_exam' exam.id %}" class="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-md">Delete</a>
+                                        </div>
+                                    </td>
                             </tr>
                             {% empty %}
                             <tr>

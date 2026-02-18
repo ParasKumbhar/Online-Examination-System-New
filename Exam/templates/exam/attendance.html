@@ -10,7 +10,7 @@
 
     <!-- Not Attended (Pending/Upcoming) -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-100">
             <h2 class="text-lg font-semibold text-slate-900">Pending / Not Attended</h2>
         </div>
         {% if exams %}
@@ -25,7 +25,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     {% for exam in exams %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-100 transition-colors">
                         <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ exam.professor }}</td>
                         <td class="px-6 py-4">
@@ -47,7 +47,7 @@
 
     <!-- Attended -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-100">
             <h2 class="text-lg font-semibold text-slate-900">Attended Exams</h2>
         </div>
         {% if completed %}
@@ -62,7 +62,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     {% for exam in completed %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-100 transition-colors">
                         <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ exam.professor }}</td>
                         <td class="px-6 py-4">

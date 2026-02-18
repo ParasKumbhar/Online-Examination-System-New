@@ -1,4 +1,5 @@
 {% load static %}
+{% load group_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,7 +52,7 @@
 
     {% block extra_css %}{% endblock %}
 </head>
-<body class="flex h-screen overflow-hidden bg-slate-50 text-slate-800 font-sans antialiased" x-data="{ sidebarOpen: false, profileOpen: false }">
+<body class="flex h-screen overflow-hidden bg-slate-100 text-slate-800 font-sans antialiased" x-data="{ sidebarOpen: false, profileOpen: false }">
 
     <!-- Mobile Overlay -->
     <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity 
@@ -63,7 +64,8 @@
         
         <!-- Logo -->
         <div class="flex items-center justify-center h-16 border-b border-slate-200 bg-white">
-            <a href="/" class="flex items-center gap-2 text-2xl font-bold text-primary">
+            <a href="{% if user.is_authenticated %}{% if user|in_group:'Professor' %}{% url 'faculty-index' %}{% else %}{% url 'index' %}{% endif %}{% else %}{% url 'homepage' %}{% endif %}"
+               class="flex items-center gap-2 text-2xl font-bold text-primary">
                 <i class="fa-solid fa-graduation-cap"></i>
                 <span>ExamPro</span>
             </a>
@@ -71,65 +73,77 @@
 
         <!-- Navigation -->
         <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-            {% if user.groups.all.0.name == 'Professor' %}
+            {% if user.is_authenticated %}
+                {% if user|in_group:"Professor" %}
                 <!-- Faculty Sidebar -->
                 <div class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Dashboard</div>
-                <a href="{% url 'faculty-index' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'faculty-index' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-house w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Overview</span>
                 </a>
 
                 <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Examinations</div>
-                <a href="{% url 'view_exams' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'view_exams' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-plus-circle w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Create Exam</span>
                 </a>
-                <a href="{% url 'faculty-add_question_paper' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'faculty-add_question_paper' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-file-pen w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Create Question Paper</span>
                 </a>
-                <a href="{% url 'faculty-addquestions' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'faculty-addquestions' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-list-check w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Question Bank</span>
                 </a>
 
                 <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Management</div>
-                <a href="{% url 'faculty-student' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'faculty-student' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-users w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Students</span>
                 </a>
-                <a href="{% url 'faculty-result' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'faculty-result' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-chart-bar w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Results & Reports</span>
                 </a>
 
-            {% elif user.groups.all.0.name == 'Student' %}
+                    {% elif user|in_group:"Student" %}
                 <!-- Student Sidebar -->
                 <div class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Student Portal</div>
-                <a href="{% url 'index' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'index' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-house w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Dashboard</span>
                 </a>
 
                 <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Exams</div>
-                <a href="{% url 'view_exams_student' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'view_exams_student' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-calendar-alt w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Upcoming Exams</span>
                 </a>
-                <a href="{% url 'student-previous' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'student-previous' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-clock-rotate-left w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Exam History</span>
                 </a>
-                <a href="{% url 'student-results' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'student-previous' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-award w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>My Results</span>
                 </a>
 
                 <div class="mt-6 px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Account</div>
-                <a href="{% url 'email-student-pref' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors group">
+                <a href="{% url 'email-student-pref' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
                     <i class="fa-solid fa-user-gear w-6 text-center group-hover:text-primary transition-colors"></i>
                     <span>Profile Settings</span>
                 </a>
+                    {% else %}
+                        <div class="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Account</div>
+                        <a href="{% url 'index' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
+                            <i class="fa-solid fa-house w-6 text-center group-hover:text-primary transition-colors"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="{% url 'email-student-pref' %}" class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 hover:text-primary transition-colors group">
+                            <i class="fa-solid fa-user-gear w-6 text-center group-hover:text-primary transition-colors"></i>
+                            <span>Profile Settings</span>
+                        </a>
+                    {% endif %}
             {% else %}
                 <div class="px-4 py-3 bg-blue-50 text-blue-700 rounded-md text-sm">
                     Please log in to view menu.
@@ -139,7 +153,7 @@
 
         <!-- Sidebar Footer -->
         <div class="p-4 border-t border-slate-200">
-            <a href="{% if user.groups.all.0.name == 'Professor' %}{% url 'faculty-logout' %}{% else %}{% url 'logout' %}{% endif %}" 
+            <a href="{% if user.is_authenticated and user|in_group:'Professor' %}{% url 'faculty-logout' %}{% else %}{% url 'logout' %}{% endif %}" 
                class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <span>Sign Out</span>
@@ -164,9 +178,16 @@
             <div class="flex items-center gap-4">
                 <div class="hidden md:flex flex-col items-end">
                     <span class="text-sm font-semibold text-slate-700">{{ user.get_full_name|default:user.username }}</span>
-                    <span class="text-xs text-slate-500">
-                        {% if user.groups.all.0.name == 'Professor' %}Faculty{% else %}Student{% endif %}
-                    </span>
+                    {% if user.is_authenticated %}
+                        <span class="text-xs text-slate-500">
+                            {% if user|in_group:"Professor" %}Faculty
+                            {% elif user|in_group:"Student" %}Student
+                            {% else %}User
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-slate-500">Guest</span>
+                    {% endif %}
                 </div>
                 <div class="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
                     {{ user.username.0|upper }}
@@ -175,7 +196,7 @@
         </header>
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-4 lg:p-8">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 lg:p-8">
             {% if messages %}
                 <div class="mb-6 space-y-2">
                     {% for message in messages %}

@@ -17,7 +17,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me-in-production')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'core',
     'admission',
     'student',
     'tuition',
@@ -34,8 +35,6 @@ INSTALLED_APPS = [
     'studentPreferences',
     'questions',
     'faculty',
-    'openpyxl',
-    'pandas',
 ]
 
 MIDDLEWARE = [
@@ -137,6 +136,9 @@ MESSAGE_TAGS = {
 
 MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = '/media/'
+
+# Use BigAutoField by default to silence system check warnings
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.environ.get('EMAIL_HOST')

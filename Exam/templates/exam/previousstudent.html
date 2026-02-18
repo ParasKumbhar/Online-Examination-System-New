@@ -13,7 +13,7 @@
         {% if completed %}
         <div class="overflow-x-auto">
             <table class="w-full text-left">
-                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold">
+                <thead class="bg-slate-100 text-slate-500 text-xs uppercase font-semibold">
                     <tr>
                         <th class="px-6 py-4">Exam Name</th>
                         <th class="px-6 py-4">Question Paper</th>
@@ -23,7 +23,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     {% for exam in completed %}
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-100 transition-colors">
                         <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ exam.question_paper.qPaperTitle }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ exam.professor }}</td>

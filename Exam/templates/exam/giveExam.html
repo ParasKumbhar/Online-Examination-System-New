@@ -21,7 +21,7 @@
         
         {% for question in question_list %}
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 border-b border-slate-100 bg-slate-50">
+            <div class="p-6 border-b border-slate-100 bg-slate-100">
                 <h3 class="font-semibold text-slate-900 flex gap-3">
                     <span class="text-slate-400">Q{{ forloop.counter }}.</span>
                     <span>{{ question.question }}</span>
@@ -30,22 +30,22 @@
             </div>
             
             <div class="p-6 space-y-3">
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
                     <input type="radio" name="{{ question.question }}" value="{{ question.optionA }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionA }}</span>
                 </label>
                 
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
                     <input type="radio" name="{{ question.question }}" value="{{ question.optionB }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionB }}</span>
                 </label>
                 
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
                     <input type="radio" name="{{ question.question }}" value="{{ question.optionC }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionC }}</span>
                 </label>
                 
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-slate-300 cursor-pointer transition-all group">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
                     <input type="radio" name="{{ question.question }}" value="{{ question.optionD }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionD }}</span>
                 </label>
@@ -72,7 +72,7 @@
                     } else {
                         clearInterval(this.timer);
                         alert("Time is up! Submitting exam automatically.");
-                        document.querySelector('form').submit();
+                        document.querySelector('form').dispatchEvent(new Event('submit', {cancelable: true}));
                     }
                 }, 1000);
             },
@@ -83,5 +83,48 @@
             }
         }
     }
+</script>
+
+<script>
+    // Intercept form submit, send via Fetch, then close popup and refresh opener.
+    (function () {
+        const form = document.querySelector('form');
+        if (!form) return;
+
+        form.addEventListener('submit', function (e) {
+            // If the event was triggered programmatically and default prevented somewhere else, allow it
+            e.preventDefault();
+
+            const submitButton = form.querySelector('[type="submit"]');
+            if (submitButton) submitButton.disabled = true;
+
+            const data = new FormData(form);
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: data,
+                credentials: 'same-origin'
+            }).then(response => {
+                // On success, try to refresh opener and then close this window
+                if (window.opener && !window.opener.closed) {
+                    try {
+                        window.opener.location.reload();
+                        window.opener.focus();
+                    } catch (err) {
+                        // ignore
+                    }
+                }
+                try {
+                    window.close();
+                } catch (err) {
+                    // fallback: navigate to a simple page that informs user they may close window
+                    document.body.innerHTML = '<div style="padding:2rem;font-family:system-ui, -apple-system, Roboto, \"Segoe UI\";">Exam submitted. You may now close this window.</div>';
+                }
+            }).catch(err => {
+                if (submitButton) submitButton.disabled = false;
+                alert('Failed to submit exam. Please try again.');
+            });
+        });
+    })();
 </script>
 {% endblock %}
