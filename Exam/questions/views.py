@@ -12,6 +12,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseForbidden
 from .models import Exam_Model, ExamForm
+from django.http import JsonResponse, HttpResponseBadRequest
+import json
 
 def has_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
@@ -297,6 +299,86 @@ def edit_question_paper(request, id):
         form = QPForm(prof, instance=qp)
 
     return render(request, 'exam/editquestionpaper.html', {'examform': form, 'qp': qp, 'prof': prof})
+
+
+@login_required(login_url='faculty-login')
+def create_question_paper(request):
+    prof = request.user
+    permissions = False
+    if prof:
+        permissions = has_group(prof,"Professor")
+    if not permissions:
+        return redirect('view_exams_student')
+
+    # render the dynamic question paper creation UI
+    return render(request, 'exam/create_question_paper.html', {'prof': prof, 'hide_sidebar': True})
+
+
+@login_required(login_url='faculty-login')
+def save_question_paper_ajax(request):
+    if request.method != 'POST' or not request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return HttpResponseBadRequest('Invalid request')
+
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        return HttpResponseBadRequest('Invalid JSON')
+
+    title = payload.get('title', '').strip()
+    try:
+        total_marks = int(payload.get('total_marks') or 0)
+    except Exception:
+        total_marks = 0
+    questions = payload.get('questions', [])
+    if not title or total_marks <= 0 or not isinstance(questions, list) or len(questions) == 0:
+        return JsonResponse({'success': False, 'error': 'Missing title, total marks, or questions'}, status=400)
+
+    prof = request.user
+    # create Question_DB objects and attach to Question_Paper; validate marks sum
+    created_questions = []
+    marks_sum = 0
+    for q in questions:
+        qtext = (q.get('question') or '').strip()
+        optA = (q.get('optionA') or '').strip()
+        optB = (q.get('optionB') or '').strip()
+        optC = (q.get('optionC') or '').strip()
+        optD = (q.get('optionD') or '').strip()
+        answer = (q.get('answer') or '').strip()  # expect 'A'|'B'|'C'|'D'
+        max_marks = q.get('max_marks') or 0
+        if not qtext or not optA or not optB or not optC or not optD or answer not in ['A','B','C','D']:
+            return JsonResponse({'success': False, 'error': 'Invalid question data'}, status=400)
+
+        try:
+            mm = int(max_marks)
+        except Exception:
+            mm = 0
+        marks_sum += mm
+
+        question_obj = Question_DB.objects.create(
+            professor=prof,
+            question=qtext,
+            optionA=optA,
+            optionB=optB,
+            optionC=optC,
+            optionD=optD,
+            answer=answer,
+            max_marks=mm
+        )
+        created_questions.append(question_obj)
+
+    # validate marks sum equals total_marks
+    if marks_sum != total_marks:
+        # cleanup created questions
+        for qq in created_questions:
+            qq.delete()
+        return JsonResponse({'success': False, 'error': 'Sum of question marks must equal total marks'}, status=400)
+
+    qp = Question_Paper.objects.create(professor=prof, qPaperTitle=title, total_marks=total_marks)
+    qp.questions.set(created_questions)
+    qp.save()
+
+    # return success with redirect target (create exam page)
+    return JsonResponse({'success': True, 'redirect': '/exams/prof/viewexams/'})
 
 
 @login_required(login_url='faculty-login')

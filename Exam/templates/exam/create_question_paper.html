@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Create Question Paper - ExamPro{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 editor-light">
+<style>
+/* Page-local light theme: increase border contrast for visible professional UI */
+.editor-light { background: transparent; color: inherit; padding: 0; }
+.editor-light .card { background: #ffffff !important; border-color: #cbd5e1 !important; color: inherit; box-shadow: 0 1px 2px rgba(2,6,23,0.04); }
+.editor-light .muted { color: #94a3b8; }
+.editor-light input[type="text"], .editor-light input[type="number"], .editor-light textarea {
+    background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: .5rem .75rem; border-radius: .5rem;
+}
+.editor-light label { color: #475569 }
+.editor-light .option-text { background: transparent; color: #0f172a; border: none; padding: 0; }
+.editor-light .option-input { background:#ffffff; color:#0f172a; border:1px solid #cbd5e1; padding:.6rem .8rem; border-radius:.5rem; width:100%; }
+.editor-light .max-marks { width:72px; padding: .375rem .9rem; border:1px solid #cbd5e1; border-radius: .5rem; text-align: right; }
+.editor-light .max-marks::-webkit-outer-spin-button,
+.editor-light .max-marks::-webkit-inner-spin-button {
+    margin-left: 6px;
+}
+.editor-light .card .border-slate-100 { border-color: #e6eef8 !important; }
+</style>
+    <div class="card bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-4 z-10">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Create Question Paper</h1>
+            <p class="text-slate-500 text-sm">Build your question paper</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <input id="qpaper-title" type="text" placeholder="Question Paper Title" class="w-full md:w-64 rounded-lg border-slate-300 px-3 py-2">
+            <input id="qpaper-total-marks" type="number" min="1" placeholder="Total Marks" class="w-32 rounded-lg border-slate-300 px-3 py-2">
+            <div class="text-sm text-slate-500">Remaining: <span id="remaining-marks">0</span></div>
+        </div>
+    </div>
+
+    <div id="questions-container" class="space-y-6">
+        <!-- Question cards inserted here -->
+    </div>
+
+    <div class="flex gap-4 justify-end">
+        <button id="add-question" class="px-6 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50">➕ Add Another Question</button>
+        <button id="save-paper" class="px-6 py-2 bg-primary hover:bg-indigo-700 text-white font-bold rounded-xl">💾 Save</button>
+    </div>
+</div>
+
+<script>
+    // Helper to create one question card (editable fields)
+    let qIndex = 0;
+    let totalMarks = 0;
+    let remainingMarks = 0;
+
+    function createQuestionCard(data) {
+        qIndex++;
+        const qNum = qIndex;
+        const container = document.createElement('div');
+        container.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden card';
+        container.dataset.index = qNum;
+
+        const header = document.createElement('div');
+        header.className = 'p-6 border-b border-slate-100 bg-slate-100';
+        header.innerHTML = `
+            <h3 class="font-semibold text-slate-900 flex gap-3">
+                <span class="text-slate-400">Q${qNum}.</span>
+                <textarea class="question-text w-full bg-transparent resize-none" rows="2" placeholder="Enter question text"></textarea>
+            </h3>
+            <p class="text-xs text-slate-400 mt-2 text-right">Marks: <input type="number" min="0" class="max-marks w-20 text-right border-none bg-transparent" value="0"></p>
+        `;
+
+        const body = document.createElement('div');
+        body.className = 'p-6 space-y-3';
+
+        // Create four options (inputs styled like student UI)
+        ['A','B','C','D'].forEach(letter => {
+            const label = document.createElement('label');
+            label.className = 'flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group';
+            label.innerHTML = `
+                <input type="radio" name="correct-${qNum}" value="${letter}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                <input type="text" class="option-input option-text" placeholder="Option ${letter}">
+            `;
+            body.appendChild(label);
+        });
+
+        container.appendChild(header);
+        container.appendChild(body);
+
+        // populate if provided
+        if (data) {
+            container.querySelector('.question-text').value = data.question || '';
+            container.querySelector('.max-marks').value = data.max_marks || 0;
+            const opts = container.querySelectorAll('.option-text');
+            opts[0].value = data.optionA || '';
+            opts[1].value = data.optionB || '';
+            opts[2].value = data.optionC || '';
+            opts[3].value = data.optionD || '';
+            const radios = container.querySelectorAll(`input[type=radio][name=correct-${qNum}]`);
+            radios.forEach(r => { if (r.value === (data.answer||'')) r.checked = true; });
+        }
+
+        // marks input behavior: select on focus and prevent inputs that would exceed remaining marks
+        (function(){
+            const mm = container.querySelector('.max-marks');
+            if (!mm) return;
+            // store previous valid value
+            mm.dataset.prev = mm.value || '0';
+            mm.addEventListener('focus', function(){ try{ this.select(); this.dataset.prev = this.value||'0'; } catch(e){} });
+            mm.addEventListener('input', function(e){
+                // compute allowed = totalMarks - sum of other inputs
+                const cards = Array.from(document.querySelectorAll('#questions-container > div'));
+                let sumOther = 0;
+                for (const card of cards){
+                    if (card === container) continue;
+                    const val = parseInt(card.querySelector('.max-marks').value) || 0;
+                    sumOther += val;
+                }
+                const allowed = (totalMarks || 0) - sumOther;
+                let v = parseInt(this.value) || 0;
+                if (v > allowed){
+                    alert('Marks exceed remaining total.');
+                    // revert to previous valid value
+                    this.value = this.dataset.prev || '0';
+                    onMarksChange();
+                    return;
+                }
+                // valid -> store as prev
+                this.dataset.prev = String(v);
+                onMarksChange();
+            });
+        })();
+
+        return container;
+    }
+
+    function addNewQuestion(data) {
+        const card = createQuestionCard(data);
+        document.getElementById('questions-container').appendChild(card);
+        // attach listener to marks input to update remaining
+        const mm = card.querySelector('.max-marks');
+        mm.addEventListener('input', onMarksChange);
+    }
+
+    // initial card (but only after total marks chosen)
+    function initFirstCardIfNeeded(){
+        if (qIndex === 0 && totalMarks > 0){
+            addNewQuestion();
+            remainingMarks = totalMarks; document.getElementById('remaining-marks').textContent = remainingMarks;
+        }
+    }
+
+    document.getElementById('qpaper-total-marks').addEventListener('change', function(e){
+        const v = parseInt(this.value) || 0;
+        if (v <= 0){ alert('Total marks must be a positive number'); this.value = ''; return; }
+        totalMarks = v;
+        remainingMarks = totalMarks;
+        document.getElementById('remaining-marks').textContent = remainingMarks;
+        if (qIndex === 0) addNewQuestion();
+    });
+
+    document.getElementById('add-question').addEventListener('click', function(e){
+        e.preventDefault();
+        if (totalMarks <= 0){ alert('Please enter total marks first'); return; }
+        if (remainingMarks <= 0){ alert('No remaining marks available for another question'); return; }
+        addNewQuestion();
+    });
+
+    function onMarksChange(e){
+        // recalculate remaining marks based on all max-marks
+        const cards = Array.from(document.querySelectorAll('#questions-container > div'));
+        let sum = 0;
+        for (const card of cards){
+            const v = parseInt(card.querySelector('.max-marks').value) || 0;
+            sum += v;
+        }
+        remainingMarks = totalMarks - sum;
+        if (remainingMarks < 0){
+            alert('Marks exceed total marks. Please adjust.');
+            remainingMarks = 0;
+        }
+        document.getElementById('remaining-marks').textContent = remainingMarks;
+        // update each input's max so spinner cannot increase beyond allowed
+        for (const card of cards){
+            const mm = card.querySelector('.max-marks');
+            if (!mm) continue;
+            const cur = parseInt(mm.value) || 0;
+            // allowed increase for this input is remainingMarks
+            mm.max = cur + remainingMarks;
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.getElementById('save-paper').addEventListener('click', async function(e){
+        e.preventDefault();
+        const title = document.getElementById('qpaper-title').value.trim();
+        if (!title) { alert('Please enter a question paper title.'); return; }
+        if (totalMarks <= 0){ alert('Please set total marks for the question paper.'); return; }
+
+        const cards = Array.from(document.querySelectorAll('#questions-container > div'));
+        const questions = [];
+        for (const card of cards) {
+            const qtext = card.querySelector('.question-text').value.trim();
+                const optEls = card.querySelectorAll('.option-text');
+                const optionA = optEls[0].value.trim();
+                const optionB = optEls[1].value.trim();
+                const optionC = optEls[2].value.trim();
+                const optionD = optEls[3].value.trim();
+            const max_marks = parseInt(card.querySelector('.max-marks').value) || 0;
+            const correct = card.querySelector(`input[type=radio][name=correct-${card.dataset.index}]:checked`);
+            const answer = correct ? correct.value : '';
+
+            if (!qtext || !optionA || !optionB || !optionC || !optionD || !['A','B','C','D'].includes(answer)) {
+                alert('Please fill all fields and select the correct answer for each question.');
+                return;
+            }
+
+            if (max_marks <= 0){ alert('Each question must have positive marks.'); return; }
+
+            questions.push({ question: qtext, optionA, optionB, optionC, optionD, answer, max_marks });
+        }
+
+        // ensure sum of marks equals totalMarks
+        const sumMarks = questions.reduce((s,q)=>s+parseInt(q.max_marks), 0);
+        if (sumMarks !== totalMarks){ alert('Total of question marks ('+sumMarks+') must equal Question Paper total marks ('+totalMarks+').'); return; }
+
+        // send via fetch
+        try {
+            const resp = await fetch("{% url 'faculty-save-question-paper' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ title, total_marks: totalMarks, questions })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                window.location.href = data.redirect || '/prof/viewexams/';
+            } else {
+                alert(data.error || 'Save failed');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Network error while saving.');
+        }
+    });
+</script>
+
+{% endblock %}

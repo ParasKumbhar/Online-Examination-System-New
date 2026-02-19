@@ -7,6 +7,7 @@ from django import forms
 class Question_Paper(models.Model):
     professor = models.ForeignKey(User, limit_choices_to={'groups__name': "Professor"}, on_delete=models.CASCADE)
     qPaperTitle = models.CharField(max_length=100)
+    total_marks = models.IntegerField(default=0)
     questions = models.ManyToManyField(Question_DB)
 
     def __str__(self):
@@ -24,5 +25,6 @@ class QPForm(ModelForm):
         exclude = ['professor']
         widgets = {
             'qPaperTitle': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
-            'questions': forms.SelectMultiple(attrs={'class': 'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary h-64'})
+            'questions': forms.SelectMultiple(attrs={'class': 'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary h-64'}),
+            'total_marks': forms.NumberInput(attrs={'class': 'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'})
         }
