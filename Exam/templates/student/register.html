@@ -10,64 +10,94 @@
         <p class="text-slate-500">Create your account to get started</p>
     </div>
 
-    <form action="{% url 'register' %}" method="post" enctype="multipart/form-data" class="space-y-4">
+    <form action="{% url 'register' %}" method="post" enctype="multipart/form-data" class="space-y-5">
         {% csrf_token %}
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="id_first_name" class="block text-sm font-medium text-slate-700 mb-1">First Name</label>
-                {{ student_form.first_name }}
-            </div>
-            <div>
-                <label for="id_last_name" class="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
-                {{ student_form.last_name }}
-            </div>
-        </div>
-
+        <!-- Username -->
         <div>
-            <label for="id_username" class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-            {{ student_form.username }}
+            <label for="id_username" class="block text-sm font-medium text-slate-700 mb-1">Username <span class="text-red-500">*</span></label>
+            <input type="text" name="username" id="id_username" tabindex="1" required
+                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                   placeholder="Enter your username"
+                   value="{{ student_form.username.value|default:'' }}">
+            {% if student_form.username.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ student_form.username.errors.0 }}</p>
+            {% endif %}
+            <div class="usernamevalidOut" style="display: none;"></div>
+            {% if student_form.username.errors %}
+            <div class="invalid-feedback" style="display: block;"></div>
+            {% endif %}
         </div>
 
+        <!-- Email -->
         <div>
-            <label for="id_email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            {{ student_form.email }}
+            <label for="id_email" class="block text-sm font-medium text-slate-700 mb-1">Email Address <span class="text-red-500">*</span></label>
+            <input type="email" name="email" id="id_email" tabindex="2" required
+                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                   placeholder="Enter your email address"
+                   value="{{ student_form.email.value|default:'' }}">
+            {% if student_form.email.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ student_form.email.errors.0 }}</p>
+            {% endif %}
+            <div class="email-feedback" style="display: none;"></div>
         </div>
 
+        <!-- Password -->
         <div>
-            <label for="id_password" class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            {{ student_form.password }}
+            <label for="id_password" class="block text-sm font-medium text-slate-700 mb-1">Password <span class="text-red-500">*</span></label>
+            <div class="relative">
+                <input type="password" name="password" id="id_password" tabindex="3" required
+                       class="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                       placeholder="Enter password">
+                <button type="button" class="showPasswordToggle absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Must contain: 8+ chars, uppercase, lowercase, number & special char (@$!%*?&)</p>
+            {% if student_form.password.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ student_form.password.errors.0 }}</p>
+            {% endif %}
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="id_address" class="block text-sm font-medium text-slate-700 mb-1">Address</label>
-                {{ student_info_form.address }}
+        <!-- Confirm Password -->
+        <div>
+            <label for="id_confirm_password" class="block text-sm font-medium text-slate-700 mb-1">Confirm Password <span class="text-red-500">*</span></label>
+            <div class="relative">
+                <input type="password" name="confirm_password" id="id_confirm_password" tabindex="4" required
+                       class="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                       placeholder="Re-enter your password">
+                <button type="button" class="showPasswordToggle absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none" tabindex="-1">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
             </div>
-            <div>
-                <label for="id_stream" class="block text-sm font-medium text-slate-700 mb-1">Stream</label>
-                {{ student_info_form.stream }}
-            </div>
+            {% if student_form.non_field_errors %}
+            <p class="mt-1 text-sm text-red-600">{{ student_form.non_field_errors.0 }}</p>
+            {% endif %}
         </div>
 
+        <!-- Profile Picture -->
         <div>
             <label for="id_picture" class="block text-sm font-medium text-slate-700 mb-1">Profile Picture</label>
-            {{ student_info_form.picture }}
+            <input type="file" name="picture" id="id_picture" tabindex="5"
+                   class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                   accept="image/*">
+            <p class="mt-1 text-xs text-slate-500">Upload a profile picture (optional)</p>
         </div>
 
-        <button type="submit" 
+        <button type="submit" tabindex="6"
                 class="w-full py-3 px-4 bg-primary hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition duration-200 mt-6">
-            Register
+            Create Account
         </button>
     </form>
 
     <div class="mt-6 text-center text-sm">
         <p class="text-slate-500">
             Already have an account? 
-            <a href="{% url 'login' %}" class="text-primary hover:text-indigo-700 font-medium hover:underline">Login</a>
+            <a href="{% url 'login' %}" class="text-primary hover:text-indigo-700 font-medium hover:underline">Login here</a>
         </p>
     </div>
 </div>
 
 <script src="{% static 'js/register.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/scripts.js' %}" type="text/javascript"></script>
 {% endblock %}

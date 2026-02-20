@@ -1,78 +1,37 @@
-const passwordfield = document.querySelector('#passwordfield');
-const usernamefield = document.querySelector('#usernamefield');
-const emailfield = document.querySelector('#emailfield');
-const showPasswordToggle = document.querySelector('.showPasswordToggle');
-const emailfeedBack = document.querySelector('.email-feedback');
-const feedBackField = document.querySelector('.invalid-feedback');
-const usernamevalidOut = document.querySelector('.usernamevalidOut');
+// register.js - Additional form handling
+console.log('Register.js loaded');
 
-const handlePasswordToggle = (e) =>{
-	if(showPasswordToggle.textContent=='SHOW'){
-		showPasswordToggle.textContent = 'HIDE'
-		passwordfield.setAttribute('type','text')
-	}else{	
-		showPasswordToggle.textContent = 'SHOW'
-		passwordfield.setAttribute('type','password')
-	}
-}
-showPasswordToggle.addEventListener('click',handlePasswordToggle);
-
-usernamefield.addEventListener('keyup',(e)=>{
-	usernameValue = e.target.value;
-	usernamevalidOut.style.display = 'block';
-	usernamefield.classList.remove('is-invalid');
-	feedBackField.style.display = 'none';
-	let headers = new Headers();
-	if(usernameValue.length>0){
-		usernamevalidOut.textContent = `Checking Username ${usernameValue}`;
-		fetch('/student/username-validate',{
-			body: JSON.stringify({username:usernameValue}),
-			method:"POST",
-			credentials: "same-origin",
-			headers: {
-				"X-CSRFToken": getCookie("csrftoken"),
-				"Accept": "application/json",
-				"Content-Type": "application/json"
-			},
-		})
-		.then((res)=>res.json())
-		.then(data=>{
-			usernamevalidOut.style.display = 'none';
-			if(data.username_error){
-				usernamefield.classList.add('is-invalid');
-				feedBackField.style.display = 'block';
-				feedBackField.innerHTML = `<p>${data.username_error}</p>`
-			}
-		})
-	}
-})
-
-emailfield.addEventListener('keyup',(e)=>{
-	const emailVal = e.target.value;
-	emailfield.classList.remove('is-invalid');
-	emailfeedBack.style.display = 'none';
-	let headers = new Headers();
-	if(emailVal.length>0){
-		fetch('/student/email-validate',{
-			body: JSON.stringify({ email: emailVal}),
-			method:"POST",
-			credentials: "same-origin",
-			headers: {
-				"X-CSRFToken": getCookie("csrftoken"),
-				"Accept": "application/json",
-				"Content-Type": "application/json"
-			},
-		})
-		.then((res)=>res.json())
-		.then((data) => {
-			if(data.email_error){
-				emailfield.classList.add('is-invalid');
-				emailfeedBack.style.display = 'block';
-				emailfeedBack.innerHTML = `<p>${data.email_error}</p>`
-			}
-		})
-	}
-})
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Register.js DOM ready');
+    
+    // Handle Enter key
+    const handleEnterKey = function(e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        
+        const field = e.target;
+        const tabindex = parseInt(field.getAttribute('tabindex')) || 0;
+        
+        const nextField = document.querySelector('[tabindex="' + (tabindex + 1) + '"]');
+        if (nextField) {
+            nextField.focus();
+        } else if (tabindex === 5) {
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.click();
+        }
+    };
+    
+    // Add Enter handlers
+    const fieldIds = ['id_username', 'id_email', 'id_password', 'id_confirm_password', 'id_picture'];
+    fieldIds.forEach(function(id) {
+        const field = document.getElementById(id);
+        if (field) {
+            field.addEventListener('keydown', handleEnterKey);
+        }
+    });
+    
+    console.log('Register.js initialization complete');
+});
 
 function getCookie(name) {
     var cookieValue = null;
@@ -80,7 +39,6 @@ function getCookie(name) {
         var cookies = document.cookie.split(';');
         for (var i = 0; i < cookies.length; i++) {
             var cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
             if (cookie.substring(0, name.length + 1) === (name + '=')) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;

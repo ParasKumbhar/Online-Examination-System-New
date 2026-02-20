@@ -1,33 +1,33 @@
 // scripts.js
 console.log('JavaScript loaded successfully!');
 
+// Global togglePassword function
+function togglePassword(btn) {
+    const container = btn.closest('.relative');
+    if (!container) {
+        console.log('No container found');
+        return;
+    }
+    
+    const input = container.querySelector('input');
+    if (!input) {
+        console.log('No input found');
+        return;
+    }
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+        btn.setAttribute('aria-label', 'Hide password');
+    } else {
+        input.type = 'password';
+        btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+        btn.setAttribute('aria-label', 'Show password');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing forms...');
-    
-    // Handle password toggle
-    const togglePassword = function(btn) {
-        const container = btn.closest('.relative');
-        if (!container) {
-            console.log('No container found');
-            return;
-        }
-        
-        const input = container.querySelector('input');
-        if (!input) {
-            console.log('No input found');
-            return;
-        }
-        
-        if (input.type === 'password') {
-            input.type = 'text';
-            btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-            btn.setAttribute('aria-label', 'Hide password');
-        } else {
-            input.type = 'password';
-            btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
-            btn.setAttribute('aria-label', 'Show password');
-        }
-    };
     
     // Attach click handlers to all password toggle buttons
     const toggleButtons = document.querySelectorAll('.showPasswordToggle');
