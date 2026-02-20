@@ -2,7 +2,7 @@
 {% block title %}Exam: {{ exam.name }} - ExamPro{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-6" x-data="examTimer({{ mins }}, {{ secs }})">
+<div class="max-w-4xl mx-auto space-y-6" x-data="examTimer()">
     <!-- Header -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4 sticky top-4 z-10">
         <div>
@@ -15,7 +15,12 @@
         </div>
     </div>
 
-    <form method="post" action="" class="space-y-6">
+    <!-- Auto-save indicator -->
+    <div id="saveIndicator" class="hidden fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+        <i class="fa-solid fa-check"></i> Saved
+    </div>
+
+    <form method="post" action="" class="space-y-6" id="examForm">
         {% csrf_token %}
         <input type="hidden" name="paper" value="{{ exam.name }}">
         
@@ -31,22 +36,22 @@
             
             <div class="p-6 space-y-3">
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="{{ question.optionA }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <input type="radio" name="{{ question.question }}" value="A" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionA }}</span>
                 </label>
                 
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="{{ question.optionB }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <input type="radio" name="{{ question.question }}" value="B" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionB }}</span>
                 </label>
                 
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="{{ question.optionC }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <input type="radio" name="{{ question.question }}" value="C" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionC }}</span>
                 </label>
                 
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="{{ question.optionD }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <input type="radio" name="{{ question.question }}" value="D" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                     <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionD }}</span>
                 </label>
             </div>
@@ -62,68 +67,152 @@
 </div>
 
 <script>
-    function examTimer(mins, secs) {
+    // Unique key for this exam based on exam name
+    var examName = "{{ exam.name|escapejs }}";
+    var username = "{{ request.user.username|escapejs }}";
+    var EXAM_KEY = 'exam_' + examName + '_' + username;
+    
+    // Default time in seconds - parsed from Django template vars
+    var minsVal = parseInt("{{ mins|default:'0' }}") || 0;
+    var secsVal = parseInt("{{ secs|default:'0' }}") || 0;
+    var defaultTimeSeconds = (minsVal * 60) + secsVal;
+    
+    // Load saved answers and time from localStorage
+    function loadExamState() {
+        var saved = localStorage.getItem(EXAM_KEY);
+        if (saved) {
+            return JSON.parse(saved);
+        }
+        return null;
+    }
+    
+    // Save exam state to localStorage
+    function saveExamState(timeRemaining, answers) {
+        var state = {
+            timeRemaining: timeRemaining,
+            answers: answers,
+            lastSaved: new Date().toISOString()
+        };
+        localStorage.setItem(EXAM_KEY, JSON.stringify(state));
+        
+        // Show save indicator
+        var indicator = document.getElementById('saveIndicator');
+        if (indicator) {
+            indicator.classList.remove('hidden');
+            setTimeout(function() {
+                indicator.classList.add('hidden');
+            }, 2000);
+        }
+    }
+    
+    // Restore radio button selections
+    function restoreAnswers(answers) {
+        if (!answers) return;
+        
+        for (var question in answers) {
+            if (answers.hasOwnProperty(question)) {
+                var answer = answers[question];
+                var radio = document.querySelector('input[name="' + question + '"][value="' + answer + '"]');
+                if (radio) {
+                    radio.checked = true;
+                }
+            }
+        }
+    }
+    
+    // Get all answers from form
+    function getAllAnswers() {
+        var form = document.getElementById('examForm');
+        var answers = {};
+        
+        // Get all radio button groups
+        var radioButtons = form.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(function(rb) {
+            if (rb.checked) {
+                answers[rb.name] = rb.value;
+            }
+        });
+        
+        return answers;
+    }
+    
+    // Initialize timer with restored state
+    function getInitialTime() {
+        var savedState = loadExamState();
+        
+        if (savedState && savedState.timeRemaining > 0) {
+            // Restore time
+            return savedState.timeRemaining;
+        }
+        
+        // Default to original time
+        return defaultTimeSeconds;
+    }
+    
+    // On page load, restore answers
+    document.addEventListener('DOMContentLoaded', function() {
+        var savedState = loadExamState();
+        
+        if (savedState) {
+            // Restore answers
+            restoreAnswers(savedState.answers);
+        }
+    });
+</script>
+
+<script>
+    function examTimer() {
         return {
-            timeRemaining: (mins * 60) + secs,
-            init() {
-                this.timer = setInterval(() => {
-                    if (this.timeRemaining > 0) {
-                        this.timeRemaining--;
+            timeRemaining: getInitialTime(),
+            timer: null,
+            init: function() {
+                var self = this;
+                
+                // Auto-save every 30 seconds
+                this.timer = setInterval(function() {
+                    if (self.timeRemaining > 0) {
+                        self.timeRemaining--;
+                        
+                        // Save every 30 seconds
+                        if (self.timeRemaining % 30 === 0) {
+                            var answers = getAllAnswers();
+                            saveExamState(self.timeRemaining, answers);
+                        }
                     } else {
-                        clearInterval(this.timer);
+                        clearInterval(self.timer);
                         alert("Time is up! Submitting exam automatically.");
+                        // Clear saved state after submission
+                        localStorage.removeItem(EXAM_KEY);
                         document.querySelector('form').dispatchEvent(new Event('submit', {cancelable: true}));
                     }
                 }, 1000);
+                
+                // Save on page unload
+                window.addEventListener('beforeunload', function() {
+                    var answers = getAllAnswers();
+                    saveExamState(self.timeRemaining, answers);
+                });
             },
-            formatTime(seconds) {
-                const m = Math.floor(seconds / 60);
-                const s = seconds % 60;
-                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            formatTime: function(seconds) {
+                var m = Math.floor(seconds / 60);
+                var s = seconds % 60;
+                return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
             }
         }
     }
 </script>
 
 <script>
-    // Intercept form submit, send via Fetch, then close popup and refresh opener.
-    (function () {
-        const form = document.querySelector('form');
+    // Handle form submission - clear saved state and submit
+    (function() {
+        var form = document.querySelector('form');
         if (!form) return;
 
-        form.addEventListener('submit', function (e) {
-            // If the event was triggered programmatically and default prevented somewhere else, allow it
-            e.preventDefault();
-
-            const submitButton = form.querySelector('[type="submit"]');
-            if (submitButton) submitButton.disabled = true;
-
-            const data = new FormData(form);
-
-            fetch(window.location.href, {
-                method: 'POST',
-                body: data,
-                credentials: 'same-origin'
-            }).then(response => {
-                // On success, try to refresh opener and then close this window
-                if (window.opener && !window.opener.closed) {
-                    try {
-                        window.opener.location.reload();
-                        window.opener.focus();
-                    } catch (err) {
-                        // ignore
-                    }
-                }
-                try {
-                    window.close();
-                } catch (err) {
-                    // fallback: navigate to a simple page that informs user they may close window
-                    document.body.innerHTML = '<div style="padding:2rem;font-family:system-ui, -apple-system, Roboto, \"Segoe UI\";">Exam submitted. You may now close this window.</div>';
-                }
-            }).catch(err => {
-                if (submitButton) submitButton.disabled = false;
-                alert('Failed to submit exam. Please try again.');
-            });
+        form.addEventListener('submit', function(e) {
+            // Clear saved state after submit
+            setTimeout(function() {
+                localStorage.removeItem(EXAM_KEY);
+            }, 1000);
         });
     })();
 </script>

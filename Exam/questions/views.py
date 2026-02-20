@@ -60,7 +60,6 @@ def add_question_paper(request):
                 return redirect('faculty-add_question_paper')
 
         exams = Exam_Model.objects.filter(professor=prof)
-        # list existing question papers for this professor
         qpapers = Question_Paper.objects.filter(professor=prof)
         return render(request, 'exam/addquestionpaper.html', {
             'exams': exams, 'examform': new_Form, 'prof': prof, 'qpapers': qpapers,
@@ -107,11 +106,24 @@ def student_view_previous(request):
     list_of_completed = []
     list_un = []
     for exam in exams:
-        if StuExam_DB.objects.filter(examname=exam.name ,student=request.user).exists():
-            if StuExam_DB.objects.get(examname=exam.name,student=request.user).completed == 1:
-                list_of_completed.append(exam)
+        stu_exam = StuExam_DB.objects.filter(
+            examname=exam.name,
+            student=request.user,
+            qpaper=exam.question_paper,
+            completed=1
+        ).first()
+        
+        if stu_exam:
+            list_of_completed.append(exam)
         else:
-            list_un.append(exam)
+            any_record = StuExam_DB.objects.filter(
+                examname=exam.name,
+                student=request.user,
+                qpaper=exam.question_paper
+            ).exists()
+            
+            if not any_record:
+                list_un.append(exam)
 
     return render(request,'exam/previousstudent.html',{
         'exams':list_un,
@@ -162,13 +174,21 @@ def view_results_prof(request):
 
 @login_required(login_url='login')
 def view_exams_student(request):
-    exams = Exam_Model.objects.all()
+    # Get ALL exams - students should see all exams created by faculty
+    exams = Exam_Model.objects.all().order_by('start_time')
     list_of_completed = []
     list_un = []
+    
     for exam in exams:
-        if StuExam_DB.objects.filter(examname=exam.name ,student=request.user).exists():
-            if StuExam_DB.objects.get(examname=exam.name,student=request.user).completed == 1:
-                list_of_completed.append(exam)
+        stu_exam = StuExam_DB.objects.filter(
+            examname=exam.name,
+            student=request.user,
+            qpaper=exam.question_paper,
+            completed=1
+        ).first()
+        
+        if stu_exam:
+            list_of_completed.append(exam)
         else:
             list_un.append(exam)
 
@@ -203,75 +223,188 @@ def convert(seconds):
 @login_required(login_url='login')
 def appear_exam(request,id):
     student = request.user
+    
+    # Get the exam first
+    exam = Exam_Model.objects.get(pk=id)
+    
+    # Check if student has already completed this exam - prevent retake
+    existing_completed = StuExam_DB.objects.filter(
+        student=student,
+        examname=exam.name,
+        qpaper=exam.question_paper,
+        completed=1
+    ).first()
+    
+    if existing_completed:
+        from django.contrib import messages
+        messages.error(request, "You have already completed this exam. You cannot retake it.")
+        return redirect('view_exams_student')
+    
     if request.method == 'GET':
-        exam = Exam_Model.objects.get(pk=id)
         time_delta = exam.end_time - exam.start_time
         time = convert(time_delta.seconds)
         time = time.split(":")
         mins = time[0]
         secs = time[1]
+        
+        existing_exam = StuExam_DB.objects.filter(student=student, examname=exam.name, completed=0).first()
+        
+        if existing_exam:
+            pass
+        
         context = {
             "exam":exam,
             "question_list":exam.question_paper.questions.all(),
             "secs":secs,
-            "mins":mins
+            "mins":mins,
+            "hide_sidebar": True
         }
         return render(request,'exam/giveExam.html',context)
+    
     if request.method == 'POST' :
         student = User.objects.get(username=request.user.username)
-        paper = request.POST['paper']
-        examMain = Exam_Model.objects.get(name = paper)
-        stuExam = StuExam_DB.objects.get_or_create(examname=paper, student=student,qpaper = examMain.question_paper)[0]
+        examMain = Exam_Model.objects.get(pk=id)
+        
+        stuExam = StuExam_DB.objects.filter(
+            examname=examMain.name, 
+            student=student, 
+            qpaper=examMain.question_paper,
+            completed=0
+        ).first()
+        
+        if not stuExam:
+            stuExam = StuExam_DB.objects.get_or_create(
+                examname=examMain.name, 
+                student=student, 
+                qpaper=examMain.question_paper,
+                completed=0
+            )[0]
         
         qPaper = examMain.question_paper
         stuExam.qpaper = qPaper
-         
-        qPaperQuestionsList = examMain.question_paper.questions.all()
+        
+        qPaperQuestionsList = list(examMain.question_paper.questions.all())
+        
         for ques in qPaperQuestionsList:
-            student_question = Stu_Question(student=student,question=ques.question, optionA=ques.optionA, optionB=ques.optionB,optionC=ques.optionC, optionD=ques.optionD,
-            answer=ques.answer)
+            student_question = Stu_Question(
+                student=student,
+                question=ques.question, 
+                optionA=ques.optionA, 
+                optionB=ques.optionB,
+                optionC=ques.optionC, 
+                optionD=ques.optionD,
+                answer=ques.answer
+            )
             student_question.save()
             stuExam.questions.add(student_question)
-            stuExam.save()
-
+        
         stuExam.completed = 1
         stuExam.save()
-        examQuestionsList = StuExam_DB.objects.filter(student=request.user,examname=paper,qpaper=examMain.question_paper,questions__student = request.user)[0]
-        #examQuestionsList = stuExam.questions.all()
+        
+        # Calculate exam score - iterate over POST data directly
         examScore = 0
-        list_i = examMain.question_paper.questions.all()
-        queslist = examQuestionsList.questions.all()
-        i = 0
-        for j in range(list_i.count()):
-            ques = queslist[j]
-            max_m = list_i[i].max_marks
-            ans = request.POST.get(ques.question, False)
-            if not ans:
-                ans = "E"
-            ques.choice = ans
-            ques.save()
-            if ans.lower() == ques.answer.lower() or ans == ques.answer:
-                examScore = examScore + max_m
-            i+=1
+        
+        # Create a mapping of question text to question details for easy lookup
+        # Store both original and stripped versions for robust matching
+        question_map = {}
+        for q in qPaperQuestionsList:
+            # Store original question text
+            question_map[q.question] = {
+                'max_marks': q.max_marks,
+                'answer': q.answer.upper() if q.answer else ''
+            }
+            # Also store stripped version
+            question_map[q.question.strip()] = {
+                'max_marks': q.max_marks,
+                'answer': q.answer.upper() if q.answer else ''
+            }
+        
+        # Iterate over POST data to find answers
+        for key, value in request.POST.items():
+            # Skip non-question fields
+            if key.lower() in ['csrfmiddlewaretoken', 'paper', '']:
+                continue
+            
+            # Get selected answer - convert to uppercase for comparison
+            if not value:
+                continue
+            selected_answer = value.upper()
+            
+            # Look up the question in our map (try both original and stripped)
+            q_info = None
+            if key in question_map:
+                q_info = question_map[key]
+            elif key.strip() in question_map:
+                q_info = question_map[key.strip()]
+            
+            if q_info:
+                max_m = q_info['max_marks']
+                correct_ans = q_info['answer']
+                
+                # Compare answers (both already uppercase)
+                if selected_answer == correct_ans:
+                    examScore += max_m
+                
+                # Update the student question choice
+                stu_q = stuExam.questions.filter(question=key).first()
+                if not stu_q:
+                    stu_q = stuExam.questions.filter(question=key.strip()).first()
+                if stu_q:
+                    stu_q.choice = selected_answer
+                    stu_q.save()
 
+        # Update the score
         stuExam.score = examScore
         stuExam.save()
-        stu = StuExam_DB.objects.filter(student=request.user,examname=examMain.name)  
-        results = StuResults_DB.objects.get_or_create(student=request.user)[0]
-        results.exams.add(stu[0])
-        results.save()
-        return redirect('view_exams_student')
+        
+        # Save to results
+        stu = StuExam_DB.objects.filter(
+            student=request.user, 
+            examname=examMain.name,
+            qpaper=examMain.question_paper,
+            completed=1
+        ).first()
+        
+        if stu:
+            results = StuResults_DB.objects.get_or_create(student=request.user)[0]
+            results.exams.add(stu)
+            results.save()
+        
+        # Redirect to result page to show the score
+        return redirect('result', id=examMain.id)
 
 @login_required(login_url='login')
 def result(request,id):
     student = request.user
-    exam = Exam_Model.objects.get(pk=id)
-    score = StuExam_DB.objects.get(student=student,examname=exam.name,qpaper=exam.question_paper).score
-    # Calculate SVG dashoffset for circular progress (stroke-dasharray = 440)
+    exam = get_object_or_404(Exam_Model, pk=id)
+    
+    stu_exam = StuExam_DB.objects.filter(
+        student=student,
+        examname=exam.name,
+        qpaper=exam.question_paper
+    ).first()
+    
+    if not stu_exam:
+        stu_exam = StuExam_DB.objects.filter(
+            student=student,
+            examname=exam.name,
+            completed=1
+        ).first()
+    
+    if not stu_exam:
+        from django.contrib import messages
+        messages.error(request, "No exam record found. Please complete the exam first.")
+        return redirect('view_exams_student')
+    
+    score = stu_exam.score
+    
+    total_marks = 0
+    for q in exam.question_paper.questions.all():
+        total_marks += q.max_marks
+    
     max_dash = 440
     try:
-        total = float(exam.total_marks) if exam.total_marks else 0.0
-        ratio = float(score) / total if total > 0 else 0.0
+        ratio = float(score) / total_marks if total_marks > 0 else 0.0
     except Exception:
         ratio = 0.0
     if ratio < 0:
@@ -280,7 +413,7 @@ def result(request,id):
         ratio = 1.0
     dashoffset = int(max_dash * (1 - ratio))
 
-    return render(request,'exam/result.html',{'exam':exam, "score":score, 'dashoffset': dashoffset})
+    return render(request,'exam/result.html',{'exam':exam, "score":score, 'total_marks': total_marks, 'dashoffset': dashoffset})
 
 
 @login_required(login_url='faculty-login')
@@ -310,7 +443,6 @@ def create_question_paper(request):
     if not permissions:
         return redirect('view_exams_student')
 
-    # render the dynamic question paper creation UI
     return render(request, 'exam/create_question_paper.html', {'prof': prof, 'hide_sidebar': True})
 
 
@@ -334,7 +466,6 @@ def save_question_paper_ajax(request):
         return JsonResponse({'success': False, 'error': 'Missing title, total marks, or questions'}, status=400)
 
     prof = request.user
-    # create Question_DB objects and attach to Question_Paper; validate marks sum
     created_questions = []
     marks_sum = 0
     for q in questions:
@@ -343,7 +474,7 @@ def save_question_paper_ajax(request):
         optB = (q.get('optionB') or '').strip()
         optC = (q.get('optionC') or '').strip()
         optD = (q.get('optionD') or '').strip()
-        answer = (q.get('answer') or '').strip()  # expect 'A'|'B'|'C'|'D'
+        answer = (q.get('answer') or '').strip()
         max_marks = q.get('max_marks') or 0
         if not qtext or not optA or not optB or not optC or not optD or answer not in ['A','B','C','D']:
             return JsonResponse({'success': False, 'error': 'Invalid question data'}, status=400)
@@ -366,9 +497,7 @@ def save_question_paper_ajax(request):
         )
         created_questions.append(question_obj)
 
-    # validate marks sum equals total_marks
     if marks_sum != total_marks:
-        # cleanup created questions
         for qq in created_questions:
             qq.delete()
         return JsonResponse({'success': False, 'error': 'Sum of question marks must equal total marks'}, status=400)
@@ -377,7 +506,6 @@ def save_question_paper_ajax(request):
     qp.questions.set(created_questions)
     qp.save()
 
-    # return success with redirect target (create exam page)
     return JsonResponse({'success': True, 'redirect': '/exams/prof/viewexams/'})
 
 

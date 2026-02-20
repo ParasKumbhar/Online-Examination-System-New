@@ -14,10 +14,93 @@ import threading
 from django.contrib.auth.models import User
 from studentPreferences.models import StudentPreferenceModel
 from django.contrib.auth.models import Group
+from student.models import StuExam_DB, StuResults_DB
 
 @login_required(login_url='login')
 def index(request):
-    return render(request,'student/index.html')
+    from questions.models import Exam_Model
+    from django.utils import timezone
+    from django.db.models import Avg, Sum
+    
+    student = request.user
+    
+    # Get ALL exams - students should see all exams created by faculty
+    all_exams = Exam_Model.objects.all().order_by('start_time')
+    
+    # Filter out exams that the student has already completed
+    upcoming_exams = []
+    for exam in all_exams:
+        is_completed = StuExam_DB.objects.filter(
+            student=student,
+            examname=exam.name,
+            qpaper=exam.question_paper,
+            completed=1
+        ).exists()
+        
+        if not is_completed:
+            upcoming_exams.append(exam)
+    
+    # Get completed exams for this student
+    completed_exams = StuExam_DB.objects.filter(student=student, completed=1)
+    
+    # Calculate average score from completed exams based on actual total marks
+    avg_score_percent = "0%"
+    if completed_exams.exists():
+        total_marks_obtained = 0
+        total_possible_marks = 0
+        
+        for exam_record in completed_exams:
+            if exam_record.qpaper:
+                for q in exam_record.qpaper.questions.all():
+                    total_possible_marks += q.max_marks
+        
+        total_score_result = completed_exams.aggregate(total_score=Sum('score'))
+        total_marks_obtained = total_score_result['total_score'] or 0
+        
+        if total_possible_marks > 0:
+            percentage = (total_marks_obtained / total_possible_marks) * 100
+            avg_score_percent = f"{int(percentage)}%"
+    
+    # Calculate rank
+    all_students_scores = {}
+    students_with_exams = StuExam_DB.objects.filter(completed=1).values_list('student_id', flat=True).distinct()
+    for student_id in students_with_exams:
+        student_exams = StuExam_DB.objects.filter(student_id=student_id, completed=1)
+        
+        student_total_obtained = 0
+        student_total_possible = 0
+        
+        for exam_record in student_exams:
+            if exam_record.qpaper:
+                for q in exam_record.qpaper.questions.all():
+                    student_total_possible += q.max_marks
+        
+        student_score_result = student_exams.aggregate(total_score=Sum('score'))
+        student_total_obtained = student_score_result['total_score'] or 0
+        
+        if student_total_possible > 0:
+            student_percentage = (student_total_obtained / student_total_possible) * 100
+        else:
+            student_percentage = 0
+        
+        all_students_scores[student_id] = student_percentage
+    
+    sorted_students = sorted(all_students_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    rank = 'N/A'
+    for i, (student_id, percentage) in enumerate(sorted_students, 1):
+        if student_id == student.id:
+            rank = i
+            break
+    
+    context = {
+        'upcoming_exams': upcoming_exams,
+        'completed_exams': completed_exams,
+        'avg_score': avg_score_percent,
+        'rank': rank
+    }
+    
+    return render(request,'student/index.html', context)
 
 class Register(View):
     def get(self,request):
@@ -97,13 +180,8 @@ class LoginView(View):
 					
 					student_pref = StudentPreferenceModel.objects.filter(user=user).first()
 					if student_pref and not student_pref.sendEmailOnLogin:
-						pass # Do not send email
+						pass
 					else:
-						# Send email if pref exists and is True, or if pref doesn't exist (default behavior)
-						# Logic in original code was slightly weird: 
-						# if student_pref exists, check sendEmailOnLogin. 
-						# if NOT student_pref, send email.
-						# So default is Send.
 						EmailThread(email_msg).start()
 
 					return redirect('index')
@@ -152,4 +230,3 @@ class VerificationView(View):
 		except Exception as e:
 			raise e
 		return redirect('login')
-	
