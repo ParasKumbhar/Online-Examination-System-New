@@ -84,6 +84,7 @@
                             <td class="px-6 py-4 text-slate-600">{{ exam.start_time|date:"M d, Y H:i" }}</td>
                             <td class="px-6 py-4">
                                 <a href="{% url 'appear-exam' exam.id %}" 
+                                   onclick="window.open(this.href, '_blank', 'width=800,height=800'); return false;"
                                    class="inline-flex items-center px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-sm font-medium transition-colors">
                                     Take Exam
                                 </a>

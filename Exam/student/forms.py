@@ -46,6 +46,7 @@ class StudentForm(forms.ModelForm):
         if password and confirm_password:
             if password != confirm_password:
                 raise forms.ValidationError("Passwords do not match!")
+        
         return cleaned_data
 
 class StudentInfoForm(forms.ModelForm):

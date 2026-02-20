@@ -203,16 +203,41 @@
 </script>
 
 <script>
-    // Handle form submission - clear saved state and submit
+    // Handle form submission - submit via AJAX, then close popup and redirect parent
     (function() {
         var form = document.querySelector('form');
         if (!form) return;
 
         form.addEventListener('submit', function(e) {
-            // Clear saved state after submit
-            setTimeout(function() {
+            // If opened in popup, use AJAX submission
+            if (window.opener) {
+                e.preventDefault();
+                
+                // Clear saved state
                 localStorage.removeItem(EXAM_KEY);
-            }, 1000);
+                
+                var examId = "{{ exam.id }}";
+                var resultUrl = "/exams/student/result/" + examId;
+                
+                // Submit form via fetch API
+                var formData = new FormData(form);
+                
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(function(response) {
+                    // Close popup window
+                    window.close();
+                    // Redirect parent to result page
+                    window.opener.location.href = resultUrl;
+                })
+                .catch(function(error) {
+                    console.error('Error submitting exam:', error);
+                    alert('Error submitting exam. Please try again.');
+                });
+            }
         });
     })();
 </script>

@@ -46,17 +46,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const handleEnterKey = function(e) {
         if (e.key !== 'Enter') return;
         
-        e.preventDefault();
-        
         const field = e.target;
         const tabindex = parseInt(field.getAttribute('tabindex')) || 0;
+        
+        // Check if this is a login form (only 2 input fields - username and password)
+        const form = field.closest('form');
+        const isLoginForm = form && 
+            form.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]').length === 2;
+        
+        // For login form, submit on Enter pressed on password field
+        if (isLoginForm && field.type === 'password') {
+            e.preventDefault();
+            form.submit();
+            return;
+        }
+        
+        // For registration form, navigate to next field
+        e.preventDefault();
         
         // Find next field
         const nextField = document.querySelector('[tabindex="' + (tabindex + 1) + '"]');
         if (nextField) {
             nextField.focus();
         } else if (tabindex === 5) {
-            // Submit on last field
+            // Submit on last field (picture field in registration)
             const submitBtn = document.querySelector('button[type="submit"]');
             if (submitBtn) submitBtn.click();
         }
@@ -71,16 +84,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Username validation
+    // Username validation with debounce
     const usernameField = document.getElementById('id_username');
     const usernameFeedback = document.querySelector('.usernamevalidOut');
+    let usernameTimeout = null;
+    let isUsernameValid = false;
+    
     if (usernameField && usernameFeedback) {
         usernameField.addEventListener('keyup', function(e) {
             const value = e.target.value;
-            if (value.length > 0) {
-                usernameFeedback.style.display = 'block';
-                usernameFeedback.textContent = 'Checking username ' + value;
-                
+            
+            // Clear previous timeout
+            if (usernameTimeout) {
+                clearTimeout(usernameTimeout);
+            }
+            
+            // Reset validation state
+            usernameField.classList.remove('is-valid', 'is-invalid');
+            usernameFeedback.classList.remove('valid-feedback', 'invalid-feedback');
+            usernameFeedback.style.display = 'none';
+            isUsernameValid = false;
+            updateSubmitButton();
+            
+            if (value.length === 0) {
+                return;
+            }
+            
+            // Show checking message
+            usernameFeedback.style.display = 'block';
+            usernameFeedback.className = 'usernamevalidOut valid-feedback';
+            usernameFeedback.textContent = 'Checking availability...';
+            
+            // Debounce the API call - wait 500ms after user stops typing
+            usernameTimeout = setTimeout(function() {
                 fetch('/student/username-validate', {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -92,45 +128,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(function(res) { return res.json(); })
                 .then(function(data) {
-                    usernameFeedback.style.display = 'none';
-                    if (data.username_error) {
+                    usernameFeedback.style.display = 'block';
+                    
+                    if (data.username_valid) {
+                        // Username is available
+                        usernameField.classList.remove('is-invalid');
+                        usernameField.classList.add('is-valid');
+                        usernameFeedback.className = 'usernamevalidOut valid-feedback text-green-600 text-sm mt-1';
+                        usernameFeedback.textContent = '✓ Username is available';
+                        isUsernameValid = true;
+                    } else if (data.username_error) {
+                        // Username has an error (exists or invalid format)
+                        usernameField.classList.remove('is-valid');
                         usernameField.classList.add('is-invalid');
+                        usernameFeedback.className = 'usernamevalidOut invalid-feedback text-red-600 text-sm mt-1';
+                        usernameFeedback.textContent = '✗ ' + data.username_error;
+                        isUsernameValid = false;
                     }
+                    
+                    updateSubmitButton();
                 })
                 .catch(function(err) {
                     console.log('Username check error:', err);
                     usernameFeedback.style.display = 'none';
                 });
+            }, 500);
+        });
+        
+        // Also validate on blur when user leaves the field
+        usernameField.addEventListener('blur', function(e) {
+            const value = e.target.value;
+            if (value.length > 0 && usernameTimeout) {
+                clearTimeout(usernameTimeout);
+                // Trigger immediate check
+                usernameField.dispatchEvent(new Event('keyup'));
             }
         });
     }
     
-    // Email validation
-    const emailField = document.getElementById('id_email');
-    const emailFeedback = document.querySelector('.email-feedback');
-    if (emailField && emailFeedback) {
-        emailField.addEventListener('keyup', function(e) {
-            const value = e.target.value;
-            if (value.length > 0 && value.includes('@')) {
-                fetch('/student/email-validate', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({email: value})
-                })
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    if (data.email_error) {
-                        emailField.classList.add('is-invalid');
-                        emailFeedback.style.display = 'block';
-                        emailFeedback.textContent = data.email_error;
-                    }
-                });
+    // Function to update submit button based on validation state
+    function updateSubmitButton() {
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            // If username field exists and has content but is not valid, disable submit
+            if (usernameField && usernameField.value.length > 0 && !isUsernameValid) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-        });
+        }
     }
     
     console.log('Form initialization complete');
