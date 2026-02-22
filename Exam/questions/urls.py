@@ -13,6 +13,13 @@ urlpatterns = [
     path('prof/exam/edit/<int:id>/', views.edit_exam, name='faculty-edit_exam'),
     path('prof/exam/delete/<int:id>/', views.delete_exam, name='faculty-delete_exam'),
     path('prof/viewstudents/',views.view_students_prof,name="faculty-student"),
+    
+    # New enhanced exam edit URLs
+    path('prof/exam/edit-enhanced/<int:id>/', views.edit_exam_enhanced, name='faculty-edit_exam_enhanced'),
+    path('prof/api/questionpaper/<int:id>/', views.get_question_paper_api, name='faculty-get_qpaper_api'),
+    path('prof/questionpaper/edit-from-exam/<int:id>/', views.edit_question_paper_from_exam, name='faculty-edit_qpaper_from_exam'),
+    path('prof/update-question-paper/', views.update_question_paper_ajax, name='faculty-update-question-paper'),
+    
     path('student/viewexams/',views.view_exams_student,name="view_exams_student"),
     path('student/previous/',views.student_view_previous,name="student-previous"),
     path('student/appear/<int:id>',views.appear_exam,name = "appear-exam"),

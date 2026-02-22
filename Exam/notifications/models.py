@@ -239,11 +239,14 @@ Manage notification preferences: {settings.SITE_URL}/preferences/
             # Get all students enrolled in this batch
             students = User.objects.filter(groups__name='Student')
             
+            # Get total marks from question paper
+            total_marks = exam.question_paper.total_marks if exam.question_paper else 0
+            
             title = f"Exam Reminder: {exam.name}"
             message = f"""
 Exam '{exam.name}' will start in {time_before_minutes} minutes.
 
-Total Marks: {exam.total_marks}
+Total Marks: {total_marks}
 Start Time: {exam.start_time}
 
 Click here to enter the exam room.

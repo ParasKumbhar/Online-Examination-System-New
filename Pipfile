@@ -8,6 +8,7 @@ django = "*"
 bcrypt = "*"
 pillow = "*"
 validate-email = "*"
+djangorestframework = "*"
 
 [dev-packages]
 

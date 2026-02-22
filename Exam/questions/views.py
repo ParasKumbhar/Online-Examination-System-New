@@ -556,3 +556,177 @@ def delete_exam(request, id):
         return redirect('view_exams')
 
     return render(request, 'exam/delete_exam.html', {'exam': exam})
+
+
+@login_required(login_url='faculty-login')
+def edit_exam_enhanced(request, id):
+    """Enhanced exam edit with question paper editing capability"""
+    from django.contrib import messages
+    prof = request.user
+    exam = get_object_or_404(Exam_Model, pk=id)
+    if exam.professor != prof:
+        return HttpResponseForbidden("You don't have permission to edit this exam.")
+
+    if request.method == 'POST':
+        form = ExamForm(prof, request.POST, instance=exam)
+        if form.is_valid():
+            ex = form.save(commit=False)
+            ex.professor = prof
+            ex.save()
+            form.save_m2m()
+            messages.success(request, 'Exam details updated successfully!')
+            return redirect('faculty-edit_exam_enhanced', id=exam.id)
+    else:
+        form = ExamForm(prof, instance=exam)
+
+    # Get question paper info
+    qpaper = exam.question_paper
+    question_count = qpaper.questions.count() if qpaper else 0
+
+    return render(request, 'exam/edit_exam_enhanced.html', {
+        'examform': form, 
+        'exam': exam,
+        'qpaper': qpaper,
+        'question_count': question_count
+    })
+
+
+@login_required(login_url='faculty-login')
+def get_question_paper_api(request, id):
+    """API endpoint to get question paper data with all questions"""
+    prof = request.user
+    qpaper = get_object_or_404(Question_Paper, pk=id)
+    
+    if qpaper.professor != prof:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    questions = []
+    for q in qpaper.questions.all():
+        questions.append({
+            'id': q.qno,
+            'question': q.question,
+            'optionA': q.optionA,
+            'optionB': q.optionB,
+            'optionC': q.optionC,
+            'optionD': q.optionD,
+            'answer': q.answer,
+            'max_marks': q.max_marks
+        })
+    
+    return JsonResponse({
+        'id': qpaper.id,
+        'title': qpaper.qPaperTitle,
+        'total_marks': qpaper.total_marks,
+        'questions': questions
+    })
+
+
+@login_required(login_url='faculty-login')
+def edit_question_paper_from_exam(request, id):
+    """Edit question paper from exam edit page - loads in the question paper editor"""
+    prof = request.user
+    qpaper = get_object_or_404(Question_Paper, pk=id)
+    
+    if qpaper.professor != prof:
+        return HttpResponseForbidden("You don't have permission to edit this question paper.")
+    
+    # Get the exam that uses this question paper
+    exam = Exam_Model.objects.filter(question_paper=qpaper).first()
+    
+    # Pass the exam ID to the template so we can redirect back after editing
+    return render(request, 'exam/create_question_paper.html', {
+        'prof': prof,
+        'qpaper': qpaper,
+        'exam_id': exam.id if exam else None,
+        'edit_mode': True,
+        'hide_sidebar': True
+    })
+
+
+@login_required(login_url='faculty-login')
+def update_question_paper_ajax(request):
+    """AJAX endpoint to update an existing question paper"""
+    if request.method != 'POST' or not request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    qpaper_id = payload.get('qpaper_id')
+    if not qpaper_id:
+        return JsonResponse({'error': 'Question paper ID required'}, status=400)
+    
+    prof = request.user
+    try:
+        qpaper = Question_Paper.objects.get(pk=qpaper_id, professor=prof)
+    except Question_Paper.DoesNotExist:
+        return JsonResponse({'error': 'Question paper not found'}, status=404)
+
+    title = payload.get('title', '').strip()
+    try:
+        total_marks = int(payload.get('total_marks') or 0)
+    except Exception:
+        total_marks = 0
+    questions = payload.get('questions', [])
+    
+    if not title or total_marks <= 0 or not isinstance(questions, list) or len(questions) == 0:
+        return JsonResponse({'error': 'Missing title, total marks, or questions'}, status=400)
+
+    # Update question paper
+    qpaper.qPaperTitle = title
+    qpaper.total_marks = total_marks
+    
+    # Clear existing questions
+    qpaper.questions.clear()
+    
+    # Process questions
+    created_questions = []
+    marks_sum = 0
+    for q in questions:
+        qtext = (q.get('question') or '').strip()
+        optA = (q.get('optionA') or '').strip()
+        optB = (q.get('optionB') or '').strip()
+        optC = (q.get('optionC') or '').strip()
+        optD = (q.get('optionD') or '').strip()
+        answer = (q.get('answer') or '').strip()
+        max_marks = q.get('max_marks') or 0
+        
+        if not qtext or not optA or not optB or not optC or not optD or answer not in ['A','B','C','D']:
+            return JsonResponse({'error': 'Invalid question data'}, status=400)
+
+        try:
+            mm = int(max_marks)
+        except Exception:
+            mm = 0
+        marks_sum += mm
+
+        question_obj = Question_DB.objects.create(
+            professor=prof,
+            question=qtext,
+            optionA=optA,
+            optionB=optB,
+            optionC=optC,
+            optionD=optD,
+            answer=answer,
+            max_marks=mm
+        )
+        created_questions.append(question_obj)
+
+    if marks_sum != total_marks:
+        for qq in created_questions:
+            qq.delete()
+        return JsonResponse({'error': 'Sum of question marks must equal total marks'}, status=400)
+
+    # Add questions to question paper
+    qpaper.questions.set(created_questions)
+    qpaper.save()
+
+    # Get the exam to redirect back
+    exam = Exam_Model.objects.filter(question_paper=qpaper).first()
+    
+    return JsonResponse({
+        'success': True, 
+        'redirect': f'/exams/prof/exam/edit-enhanced/{exam.id}/' if exam else '/exams/prof/viewexams/'
+    })

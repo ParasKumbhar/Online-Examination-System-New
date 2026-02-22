@@ -26,5 +26,5 @@ class QPForm(ModelForm):
         widgets = {
             'qPaperTitle': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
             'questions': forms.SelectMultiple(attrs={'class': 'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary h-64'}),
-            'total_marks': forms.NumberInput(attrs={'class': 'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'})
+            'total_marks': forms.NumberInput(attrs={'class': 'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary', 'step': '1', 'min': '1'})
         }

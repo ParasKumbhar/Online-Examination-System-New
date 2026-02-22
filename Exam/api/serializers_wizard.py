@@ -4,7 +4,8 @@ Enhanced API Serializers for new Question Management Models
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models_new import Question_DB_New, QuestionPool, ExamTemplate, QuestionTag
+from questions.models_new import Question_DB_New, QuestionPool, ExamTemplate
+from questions.question_enhancements import QuestionTag
 from course.models import Course
 
 

@@ -8,7 +8,7 @@ from django import forms
 class Exam_Model(models.Model):
     professor = models.ForeignKey(User, limit_choices_to={'groups__name': "Professor"}, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
-    total_marks = models.IntegerField()
+    total_marks = models.IntegerField(default=0, blank=True)
     question_paper = models.ForeignKey(Question_Paper, on_delete=models.CASCADE, related_name='exams')
     start_time = models.DateTimeField(default=datetime.now())
     end_time = models.DateTimeField(default=datetime.now())
@@ -25,10 +25,9 @@ class ExamForm(ModelForm):
     class Meta:
         model = Exam_Model
         fields = '__all__'
-        exclude = ['professor']
+        exclude = ['professor', 'total_marks']
         widgets = {
             'name': forms.TextInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
-            'total_marks' : forms.NumberInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'}),
             'start_time': forms.DateTimeInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary', 'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary', 'type': 'datetime-local'}),
             'question_paper': forms.Select(attrs = {'class':'w-full rounded-lg border-slate-300 text-slate-900 focus:ring-primary focus:border-primary'})

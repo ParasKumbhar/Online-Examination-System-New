@@ -4,6 +4,7 @@ asgiref==3.3.4
 bcrypt==3.2.0
 cffi==1.15.1
 Django==3.2.25
+djangorestframework==3.14.0
 emailvalidator==0.3
 openpyxl==3.0.10
 pandas==1.3.5

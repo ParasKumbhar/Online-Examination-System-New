@@ -8,7 +8,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import SearchFilter, OrderingFilter
-from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.db.models import Q, Avg, Max, Min, Count
 from django.core.cache import cache
@@ -195,6 +194,9 @@ def exam_submit(request, exam_id):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    # Get total marks from question paper
+    total_marks = exam.question_paper.total_marks if exam.question_paper else 0
+    
     # Process submission
     answers = request.data.get('answers', {})
     student = request.user
@@ -230,8 +232,8 @@ def exam_submit(request, exam_id):
             'success': True,
             'message': 'Exam submitted successfully',
             'score': score,
-            'total_marks': exam.total_marks,
-            'percentage': round((score / exam.total_marks * 100), 2)
+            'total_marks': total_marks,
+            'percentage': round((score / total_marks * 100), 2) if total_marks > 0 else 0
         }, status=status.HTTP_200_OK)
     
     except Exception as e:
@@ -345,6 +347,9 @@ def exam_analytics(request, exam_id):
     if not submissions.exists():
         return Response({'error': 'No submissions yet'})
     
+    # Get total marks from question paper
+    total_marks = exam.question_paper.total_marks if exam.question_paper else 0
+    
     # Calculate statistics
     scores = list(submissions.values_list('score', flat=True))
     
@@ -357,9 +362,9 @@ def exam_analytics(request, exam_id):
         'highest_score': max(scores),
         'lowest_score': min(scores),
         'pass_percentage': round(
-            sum(1 for s in scores if s >= exam.total_marks * 0.5) / len(scores) * 100,
+            sum(1 for s in scores if s >= total_marks * 0.5) / len(scores) * 100,
             2
-        ),
+        ) if total_marks > 0 else 0,
         'question_statistics': []
     }
     

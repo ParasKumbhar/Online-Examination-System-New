@@ -65,6 +65,7 @@ class ExamSerializer(serializers.ModelSerializer):
     
     professor_name = serializers.CharField(source='professor.username', read_only=True)
     question_count = serializers.SerializerMethodField()
+    total_marks = serializers.SerializerMethodField()
     
     class Meta:
         model = Exam_Model
@@ -78,6 +79,10 @@ class ExamSerializer(serializers.ModelSerializer):
     def get_question_count(self, obj):
         """Get total number of questions in exam."""
         return obj.question_paper.questions.count() if obj.question_paper else 0
+    
+    def get_total_marks(self, obj):
+        """Get total marks from question paper."""
+        return obj.question_paper.total_marks if obj.question_paper else 0
 
 
 class StudentExamDetailSerializer(serializers.ModelSerializer):
@@ -86,6 +91,7 @@ class StudentExamDetailSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     professor_name = serializers.CharField(source='professor.username', read_only=True)
     duration_minutes = serializers.SerializerMethodField()
+    total_marks = serializers.SerializerMethodField()
     
     class Meta:
         model = Exam_Model
@@ -101,6 +107,10 @@ class StudentExamDetailSerializer(serializers.ModelSerializer):
             delta = obj.end_time - obj.start_time
             return int(delta.total_seconds() / 60)
         return 0
+    
+    def get_total_marks(self, obj):
+        """Get total marks from question paper."""
+        return obj.question_paper.total_marks if obj.question_paper else 0
 
 
 class StudentAnswerSerializer(serializers.ModelSerializer):
@@ -139,6 +149,7 @@ class ExamResultSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.username', read_only=True)
     percentage = serializers.SerializerMethodField()
     questions = StudentAnswerSerializer(many=True, read_only=True)
+    total_marks = serializers.SerializerMethodField()
     
     class Meta:
         model = StuExam_DB
@@ -154,6 +165,10 @@ class ExamResultSerializer(serializers.ModelSerializer):
             total = sum(q.max_marks for q in obj.qpaper.questions.all())
             return round((obj.score / total * 100), 2) if total > 0 else 0
         return 0
+    
+    def get_total_marks(self, obj):
+        """Get total marks from question paper."""
+        return obj.qpaper.total_marks if obj.qpaper else 0
 
 
 class StudentProgressSerializer(serializers.Serializer):
