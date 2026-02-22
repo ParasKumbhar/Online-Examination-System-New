@@ -38,7 +38,8 @@ The Online Examination System is a digital platform designed to simplify the exa
 
 #### Step 1: Download or Clone the Repository
 Open CMD/Terminal and run:
-```bash
+```
+bash
 git clone https://github.com/ParasKumbhar/Online-Examination-System-New
 cd Online-Examination-System-New
 ```
@@ -47,7 +48,8 @@ cd Online-Examination-System-New
 
 #### Step 2: Verify Python Installation
 Open CMD and run:
-```bash
+```
+bash
 python --version
 ```
 Expected output: `Python 3.x.x`
@@ -58,13 +60,15 @@ If Python is not installed, download it from [python.org](https://www.python.org
 
 #### Step 3: Verify PIP Installation
 Open CMD and run:
-```bash
+```
+bash
 pip --version
 ```
 
 OR
 
-```bash
+```
+bash
 python -m pip --version
 ```
 
@@ -74,7 +78,8 @@ Expected output: `pip x.x.x from ...`
 
 #### Step 4: Install Pipenv
 Open CMD and run:
-```bash
+```
+bash
 pip install pipenv
 ```
 
@@ -82,7 +87,8 @@ pip install pipenv
 
 #### Step 5: Verify Pipenv Installation
 Open CMD and run:
-```bash
+```
+bash
 pipenv --version
 ```
 
@@ -93,7 +99,8 @@ Expected output: `pipenv, version x.x.x`
 #### Step 6: Set Up Python Scripts in Environment Variables (Windows Only)
 
 **Step 6.1:** Identify your Python Scripts path by running:
-```bash
+```
+bash
 python -m site --user-site
 ```
 
@@ -111,7 +118,8 @@ python -m site --user-site
 
 #### Step 7: Create Virtual Environment
 Open VS Code Terminal and run:
-```bash
+```
+bash
 pipenv install
 ```
 
@@ -121,7 +129,8 @@ This creates a virtual environment and installs dependencies from `Pipfile`.
 
 #### Step 8: Activate Pipenv Shell
 Open VS Code Terminal and run:
-```bash
+```
+bash
 pipenv shell
 ```
 
@@ -131,7 +140,8 @@ pipenv shell
 
 #### Step 9: Install Project Requirements
 In VS Code Terminal (with pipenv shell activated), run:
-```bash
+```
+bash
 pip install -r requirements.txt
 ```
 
@@ -142,62 +152,49 @@ This installs all necessary packages including Django, database drivers, and oth
 ### **Phase 3: Environment Configuration**
 
 #### Step 10: Configure Email Settings
-Create a file named `env.bat` in the project root folder (same directory as `manage.py`).
+Create a file named `.env` in the project root folder (same directory as `manage.py`).
 
 **For Windows**, add the following content:
-```bash
-@echo off
-REM Django Settings
-set DEBUG=False
-set SECRET_KEY=django-insecure-your-generated-secret-key-here
-set ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
+```
+bash
+# Django Settings
+DEBUG=False
+SECRET_KEY=django-insecure-your-generated-secret-key-here-change-in-production
+ALLOWED_HOSTS=localhost,127.0.0.1
 
-REM Database Configuration
-set DATABASE_ENGINE=django.db.backends.postgresql
-set DATABASE_NAME=exam_system_db
-set DATABASE_USER=exam_user
-set DATABASE_PASSWORD=strong_password_here
-set DATABASE_HOST=localhost
-set DATABASE_PORT=5432
+# Database Configuration (SQLite for development)
+DATABASE_ENGINE=django.db.backends.sqlite3
+DATABASE_NAME=db.sqlite3
 
-REM Email Configuration (Gmail SMTP)
-set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-set EMAIL_HOST=smtp.gmail.com
-set EMAIL_HOST_USER=your_email@example.com
-set EMAIL_HOST_PASSWORD=your_email_password
-set EMAIL_PORT=587
-set EMAIL_USE_TLS=True
-set DEFAULT_FROM_EMAIL=your_email@example.com
+# Email Configuration (Gmail SMTP - from env.bat)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST_USER=your_email@example.com
+EMAIL_HOST_PASSWORD=your_email_password
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+DEFAULT_FROM_EMAIL=your_email@example.com
 
-REM 2FA Configuration
-set TWO_FACTOR_ENABLED=True
-set OTP_EXPIRY_TIME=600
+# Site URL for notifications (required by notifications/models.py)
+SITE_URL=http://localhost:8000
 
-REM Redis Cache Configuration
-set REDIS_HOST=localhost
-set REDIS_PORT=6379
-set REDIS_DB=0
+# 2FA Configuration  
+TWO_FACTOR_ENABLED=True
+OTP_EXPIRY_TIME=600
 
-REM Security Settings
-set SECURE_SSL_REDIRECT=True
-set SESSION_COOKIE_SECURE=True
-set CSRF_COOKIE_SECURE=True
-set SECURE_HSTS_SECONDS=31536000
-set SECURE_HSTS_INCLUDE_SUBDOMAINS=True
-
-REM Logging Configuration
-set LOG_LEVEL=INFO
-
-REM Display loaded configuration
-echo Environment variables loaded:
-echo - Email: %EMAIL_HOST_USER%
-echo - Database: %DATABASE_HOST%
-echo - Redis: %REDIS_HOST%:%REDIS_PORT%
+# Redis Cache Configuration (optional - comment out if not using Redis)
+REDIS_HOST=localhost  
+REDIS_PORT=6379  
+REDIS_DB=0
+  
+# Logging Configuration  
+LOG_LEVEL=INFO
 ```
 
 
 **For Linux/macOS**, create `env.sh` instead:
-```bash
+```
+bash
 export EMAIL_HOST_PASSWORD=your_email_password
 export EMAIL_HOST_USER=your_email@example.com
 export EMAIL_HOST=smtp.gmail.com
@@ -210,12 +207,21 @@ export DEFAULT_FROM_EMAIL=your_email@example.com
 In VS Code Terminal, run:
 
 **For Windows:**
-```bash
-.\\env.bat
+```
+bash
+# The .env file is automatically loaded by Django's python-dotenv
+# No manual loading needed - just run your Django commands
+# Example: python manage.py runserver
 ```
 
 **For Linux/macOS:**
-```bash
+```
+bash
+# The .env file is automatically loaded by Django's python-dotenv
+# No manual loading needed - just run your Django commands
+# Example: python manage.py runserver
+
+# Alternative: If using env.sh (legacy method)
 source env.sh
 ```
 
@@ -223,7 +229,8 @@ source env.sh
 
 #### Step 12: Navigate to Project Directory
 In VS Code Terminal, run:
-```bash
+```
+bash
 cd Exam
 ```
 
@@ -233,7 +240,8 @@ cd Exam
 
 #### Step 13: Run Initial Migrations
 In VS Code Terminal, run:
-```bash
+```
+bash
 python manage.py migrate
 ```
 
@@ -243,7 +251,8 @@ This applies all database migrations and creates the necessary tables.
 
 #### Step 14: Create New Migrations (if needed)
 If you've made changes to models, generate new migrations:
-```bash
+```
+bash
 python manage.py makemigrations
 ```
 
@@ -251,7 +260,8 @@ python manage.py makemigrations
 
 #### Step 15: Apply Migrations Again
 After creating new migrations, apply them:
-```bash
+```
+bash
 python manage.py migrate
 ```
 
@@ -259,7 +269,8 @@ python manage.py migrate
 
 #### Step 16: Collect Static Files (For Production)
 For production deployment, collect static files:
-```bash
+```
+bash
 python manage.py collectstatic --noinput
 ```
 
@@ -269,7 +280,8 @@ python manage.py collectstatic --noinput
 
 #### Step 17: Create Superuser Account
 In VS Code Terminal, run:
-```bash
+```
+bash
 python manage.py createsuperuser
 ```
 
@@ -282,7 +294,8 @@ You'll be prompted to enter:
 
 #### Step 18: Run the Development Server
 In VS Code Terminal, run:
-```bash
+```
+bash
 python manage.py runserver
 ```
 
@@ -362,19 +375,22 @@ If emails are not being sent, verify your `env.bat` file settings and ensure you
 
 ### Issue: Port 8000 already in use
 **Solution**: Run server on a different port:
-```bash
+```
+bash
 python manage.py runserver 8001
 ```
 
 ### Issue: Database migration errors
 **Solution**: Delete `db.sqlite3` and run migrations again:
-```bash
+```
+bash
 python manage.py migrate
 ```
 
 ### Issue: Static files not loading
 **Solution**: Run:
-```bash
+```
+bash
 python manage.py collectstatic --noinput
 ```
 
@@ -420,7 +436,7 @@ Online-Examination-System/
 
 ## Support & Documentation
 
-For more information, visit the [GitHub Repository](https://github.com/ParasKumbhar/Online-Examination-System-New)
+For more information, visit the [GitHub Repository](https://github.com/ParasKumbhar/Online-Examination-System)
 
 ---
 
