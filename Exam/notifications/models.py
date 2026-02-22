@@ -193,7 +193,7 @@ Best regards,
 Exam System Team
 
 ---
-Manage notification preferences: {settings.SITE_URL}/preferences/
+Manage notification preferences: {getattr(settings, 'SITE_URL', 'http://localhost:8000')}/preferences/
             """
             
             send_mail(

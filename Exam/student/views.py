@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes, force_str, DjangoUnicodeDecodeError
 from .utils import account_activation_token
 from django.core.mail import EmailMessage
+from django.conf import settings
 import threading
 from django.contrib.auth.models import User
 from studentPreferences.models import StudentPreferenceModel
@@ -127,7 +128,7 @@ class Register(View):
             activate_url = 'http://' + domain +link
             email_subject = 'Activate your Exam Portal account'
             email_body = 'Hi.Please use this link to verify your account\n' + activate_url + ".\n\n You are receiving this message because you registered on " + domain +". If you didn't register please contact support team on " + domain 
-            fromEmail = 'noreply@exam.com'
+            fromEmail = settings.DEFAULT_FROM_EMAIL
             email = EmailMessage(
 				email_subject,
 				email_body,
@@ -170,7 +171,7 @@ class LoginView(View):
 
 					email_subject = 'You Logged into your Portal account'
 					email_body = "If you think someone else logged in. Please contact support or reset your password.\n\nYou are receving this message because you have enabled login email notifications in portal settings. If you don't want to recieve such emails in future please turn the login email notifications off in settings."
-					fromEmail = 'noreply@exam.com'
+					fromEmail = settings.DEFAULT_FROM_EMAIL
 					email_msg = EmailMessage(
 						email_subject,
 						email_body,

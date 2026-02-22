@@ -6,6 +6,7 @@ import validate_email
 from validate_email import validate_email
 from .views import EmailThread
 from django.core.mail import EmailMessage
+from django.conf import settings
 
 class UsernameValidation(View):
     def post(self,request):
@@ -39,7 +40,7 @@ class Cheating(View):
 		email = User.objects.get(username=professorname).email
 		email_subject = 'Student Cheating'
 		email_body = 'Student caught changing window for 5 times. Student username is :' + student
-		fromEmail = 'noreply@exam.com'
+		fromEmail = settings.DEFAULT_FROM_EMAIL
 		email_obj = EmailMessage(
 		    email_subject,
 		    email_body,

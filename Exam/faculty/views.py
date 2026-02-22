@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 import threading
 from django.contrib.sites.shortcuts import get_current_site
+from django.conf import settings
 from student.views import EmailThread
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
@@ -60,7 +61,7 @@ class Register(View):
             domain = get_current_site(request).domain
             email_subject = 'Activate your Exam Portal Faculty account'
             email_body = "Hi. Please contact the admin team of "+domain+". To register yourself as a professor."+ ".\n\n You are receiving this message because you registered on " + domain +". If you didn't register please contact support team on " + domain 
-            fromEmail = 'noreply@exam.com'
+            fromEmail = settings.DEFAULT_FROM_EMAIL
             email = EmailMessage(
 				email_subject,
 				email_body,
