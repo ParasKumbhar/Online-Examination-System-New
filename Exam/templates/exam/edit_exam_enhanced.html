@@ -7,7 +7,55 @@
     <!-- Header -->
     <div>
         <h1 class="text-2xl font-bold text-slate-900">Edit Exam</h1>
-        <p class="text-slate-500">Modify exam details and manage the question paper</p>
+        <p class="text-slate-500">Modify exam details</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="fa-solid fa-file-alt text-blue-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500">Question Paper</p>
+                        <p class="text-lg font-semibold text-slate-900">{{ qpaper.qPaperTitle|default:"Not assigned" }}</p>
+                    </div>
+                </div>
+                {% if qpaper %}
+                <a href="{% url 'faculty-edit_qpaper_from_exam' qpaper.id %}" 
+                   class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors text-sm">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Edit
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <i class="fa-solid fa-list-check text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-slate-500">Questions</p>
+                    <p class="text-lg font-semibold text-slate-900">{{ question_count|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                    <i class="fa-solid fa-star text-purple-600"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-slate-500">Total Marks</p>
+                    <p class="text-lg font-semibold text-slate-900">{{ qpaper.total_marks|default:0 }}</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Exam Details Form -->
@@ -50,36 +98,7 @@
                         <div class="mt-1 text-sm text-red-500">{{ examform.end_time.errors|striptags }}</div>
                     {% endif %}
                 </div>
-
-                <!-- Question Paper -->
-                <div class="md:col-span-2">
-                    <label for="{{ examform.question_paper.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-2">
-                        Question Paper
-                    </label>
-                    {{ examform.question_paper }}
-                    {% if examform.question_paper.errors %}
-                        <div class="mt-1 text-sm text-red-500">{{ examform.question_paper.errors|striptags }}</div>
-                    {% endif %}
-                </div>
             </div>
-
-            <!-- Question Paper Info Box -->
-            {% if qpaper %}
-            <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-slate-700">Current Question Paper</p>
-                        <p class="text-lg font-semibold text-slate-900">{{ qpaper.qPaperTitle }}</p>
-                        <p class="text-sm text-slate-500">{{ question_count }} questions • {{ qpaper.total_marks }} marks</p>
-                    </div>
-                    <a href="{% url 'faculty-edit_qpaper_from_exam' qpaper.id %}" 
-                       class="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                        Edit Question Paper
-                    </a>
-                </div>
-            </div>
-            {% endif %}
 
             <!-- Action Buttons -->
             <div class="flex items-center justify-between pt-4 border-t border-slate-200">
@@ -96,50 +115,11 @@
             </div>
         </form>
     </div>
-
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <i class="fa-solid fa-file-alt text-blue-600"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-slate-500">Question Paper</p>
-                    <p class="text-lg font-semibold text-slate-900">{{ qpaper.qPaperTitle|default:"Not assigned" }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                    <i class="fa-solid fa-list-check text-green-600"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-slate-500">Questions</p>
-                    <p class="text-lg font-semibold text-slate-900">{{ question_count|default:0 }}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-white rounded-xl border border-slate-200 p-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <i class="fa-solid fa-star text-purple-600"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-slate-500">Total Marks</p>
-                    <p class="text-lg font-semibold text-slate-900">{{ qpaper.total_marks|default:0 }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <style>
     /* Form field styling */
-    #id_name, #id_start_time, #id_end_time, #id_question_paper {
+    #id_name, #id_start_time, #id_end_time {
         width: 100%;
         border-radius: 0.5rem;
         border-color: #cbd5e1;
@@ -148,7 +128,7 @@
         font-size: 1rem;
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
-    #id_name:focus, #id_start_time:focus, #id_end_time:focus, #id_question_paper:focus {
+    #id_name:focus, #id_start_time:focus, #id_end_time:focus {
         outline: none;
         border-color: #4f46e5;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);

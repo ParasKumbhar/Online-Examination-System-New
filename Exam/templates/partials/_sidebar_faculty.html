@@ -156,20 +156,16 @@
     </li>
 
     <li>
-      <a href="{% url 'view_exams' %}">
-        <i class="fas fa-calendar-plus"></i> Create Exam
+      <a href="{% url 'create_exam' %}">
+        <i class="fas fa-calendar-plus"></i> Create Exams
       </a>
     </li>
 
-    <li class="menu-heading">
-      <span><i class="fas fa-file-alt"></i> Create New Exams</span>
-      <i class="fas fa-chevron-down arrow"></i>
+    <li>
+      <a href="{% url 'view_exams' %}">
+        <i class="fas fa-clipboard-list"></i> Manage Exams
+      </a>
     </li>
-    <ul class="submenu">
-      <li><a href="{% url 'view_exams' %}">New Main Exam</a></li>
-      <li><a href="{% url 'faculty-add_question_paper' %}">New Question Paper</a></li>
-      <li><a href="{% url 'faculty-addquestions' %}">New Questions</a></li>
-    </ul>
 
     <li class="menu-heading">
       <span><i class="fas fa-clipboard-list"></i> Summary</span>

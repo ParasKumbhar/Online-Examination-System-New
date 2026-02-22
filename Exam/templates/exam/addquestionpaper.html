@@ -28,7 +28,7 @@
                     <div class="text-sm text-slate-500">{{ qp.questions.count }} questions</div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <a href="{% url 'faculty-edit_qpaper' qp.id %}" class="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md">Edit</a>
+                    <a href="{% url 'faculty-edit_qpaper_from_exam' qp.id %}" class="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md">Edit</a>
                     <a href="{% url 'faculty-delete_qpaper' qp.id %}" class="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-md">Delete</a>
                 </div>
             </div>

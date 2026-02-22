@@ -139,8 +139,18 @@
         container.dataset.index = qNum;
 
         var header = document.createElement('div');
-        header.className = 'p-6 border-b border-slate-100 bg-slate-100';
-        header.innerHTML = '<h3 class="font-semibold text-slate-900 flex gap-3"><span class="text-slate-400">Q' + qNum + '.</span><textarea class="question-text w-full bg-transparent resize-none" rows="2" placeholder="Enter question text"></textarea></h3><p class="text-xs text-slate-400 mt-2 text-right">Marks: <input type="number" min="0" step="1" class="max-marks w-20 text-right border-none bg-transparent" value="0"></p>';
+        header.className = 'p-4 border-b border-slate-100 bg-slate-100 flex justify-between items-center gap-2';
+        header.innerHTML = '<div class="flex items-center gap-2 flex-1"><span class="text-slate-400 font-semibold text-sm whitespace-nowrap">Q' + qNum + '.</span><textarea class="question-text flex-1 bg-transparent resize-none text-sm" rows="1" placeholder="Enter question text"></textarea><span class="text-xs text-slate-400 whitespace-nowrap">Marks:</span><input type="number" min="0" step="1" class="max-marks w-14 text-center border border-slate-200 rounded text-sm" value="0"></div><button type="button" class="remove-question ml-2 px-2 py-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors text-xs" title="Remove this question"><i class="fa-solid fa-trash"></i></button>';
+        
+        // Add remove button event listener
+        var removeBtn = header.querySelector('.remove-question');
+        removeBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to remove this question?')) {
+                container.remove();
+                onMarksChange();
+                renumberQuestions();
+            }
+        });
 
         var body = document.createElement('div');
         body.className = 'p-6 space-y-3';
@@ -257,6 +267,33 @@
             var cur = parseInt(mm.value) || 0;
             mm.max = cur + remainingMarks;
         }
+    }
+
+    function renumberQuestions() {
+        var cards = document.querySelectorAll('#questions-container > div');
+        var newIndex = 0;
+        cards.forEach(function(card) {
+            newIndex++;
+            card.dataset.index = newIndex;
+            var qNumSpan = card.querySelector('.text-slate-400');
+            if (qNumSpan) {
+                qNumSpan.textContent = 'Q' + newIndex + '.';
+            }
+            // Update radio button names
+            var radios = card.querySelectorAll('input[type="radio"]');
+            radios.forEach(function(radio) {
+                var oldName = radio.name;
+                var newName = 'correct-' + newIndex;
+                radio.name = newName;
+            });
+            // Update option placeholders
+            var labels = card.querySelectorAll('.option-text');
+            var letters = ['A', 'B', 'C', 'D'];
+            for (var i = 0; i < labels.length; i++) {
+                labels[i].placeholder = 'Option ' + letters[i];
+            }
+        });
+        qIndex = newIndex;
     }
 
     function getCookie(name) {

@@ -76,7 +76,7 @@
             <table class="w-full text-left">
                 <thead class="bg-slate-100 text-slate-500 text-xs uppercase font-semibold">
                     <tr>
-                        <th class="px-6 py-4">Exam Name</th>
+                        <th class="px-6 py-4">Question Paper Name</th>
                         <th class="px-6 py-4">Date</th>
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4">Action</th>
@@ -85,7 +85,7 @@
                 <tbody class="divide-y divide-slate-100">
                     {% for exam in recent_exams %}
                     <tr class="hover:bg-slate-100 transition-colors">
-                        <td class="px-6 py-4 font-medium text-slate-900">{{ exam.name }}</td>
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ exam.question_paper.qPaperTitle }}</td>
                         <td class="px-6 py-4 text-slate-600">{{ exam.start_time|date:"d M Y" }}</td>
                         <td class="px-6 py-4">
                             <!-- We use a custom filter or logic in template if 'now' is available, or just check fields -->
@@ -102,7 +102,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4">
-                            <a href="{% url 'view_exams' %}" class="text-primary hover:text-indigo-700 font-medium text-sm">Manage</a>
+                            <a href="{% url 'faculty-edit_exam_enhanced' exam.id %}" class="text-primary hover:text-indigo-700 font-medium text-sm">Manage</a>
                         </td>
                     </tr>
                     {% empty %}

@@ -19,7 +19,8 @@ def has_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 @login_required(login_url='faculty-login')
-def view_exams_prof(request):
+def create_exam(request):
+    """View for creating a new exam - separate page with only creation form"""
     prof = request.user
     permissions = False
     if prof:
@@ -33,11 +34,27 @@ def view_exams_prof(request):
                 exam.professor = prof
                 exam.save()
                 form.save_m2m()
-                return redirect('view_exams')
+                from django.contrib import messages
+                messages.success(request, 'Exam created successfully!')
+                return redirect('create_exam')
 
+        return render(request, 'exam/create_exam.html', {
+            'examform': new_Form, 'prof': prof,
+        })
+    else:
+        return redirect('view_exams_student')
+
+@login_required(login_url='faculty-login')
+def view_exams_prof(request):
+    """View for managing exams - shows list of exams only"""
+    prof = request.user
+    permissions = False
+    if prof:
+        permissions = has_group(prof,"Professor")
+    if permissions:
         exams = Exam_Model.objects.filter(professor=prof)
         return render(request, 'exam/mainexam.html', {
-            'exams': exams, 'examform': new_Form, 'prof': prof,
+            'exams': exams, 'prof': prof,
         })
     else:
         return redirect('view_exams_student')
@@ -157,19 +174,73 @@ def view_students_prof(request):
 
 @login_required(login_url='faculty-login')
 def view_results_prof(request):
-    students = User.objects.filter(groups__name = "Student")
-    dicts = {}
+    """
+    View for faculty to see all student results organized by student.
+    Each student shows their results for all exams created by this professor.
+    """
     prof = request.user
-    professor = User.objects.get(username=prof.username)
-    examn = Exam_Model.objects.filter(professor=professor)
-    for exam in examn:
-        if StuExam_DB.objects.filter(examname=exam.name,completed=1).exists():
-            students_filter = StuExam_DB.objects.filter(examname=exam.name,completed=1)
-            for student in students_filter:
-                key = str(student.student) + " " + str(student.examname) + " " + str(student.qpaper.qPaperTitle)
-                dicts[key] = student.score
+    
+    # Get all exams created by this professor
+    professor_exams = Exam_Model.objects.filter(professor=prof)
+    
+    # Get all students who took any of professor's exams
+    student_results = {}
+    
+    for exam in professor_exams:
+        # Get all completed exam attempts for this exam
+        exam_attempts = StuExam_DB.objects.filter(
+            examname=exam.name,
+            qpaper=exam.question_paper,
+            completed=1
+        ).select_related('student', 'qpaper')
+        
+        for attempt in exam_attempts:
+            student_username = str(attempt.student.username)
+            
+            # Get student's full name if available
+            student_first_name = attempt.student.first_name
+            student_last_name = attempt.student.last_name
+            if student_first_name or student_last_name:
+                student_display_name = f"{student_first_name} {student_last_name}".strip()
+            else:
+                student_display_name = student_username
+            
+            # Calculate total marks for this exam
+            total_marks = 0
+            if attempt.qpaper:
+                for question in attempt.qpaper.questions.all():
+                    total_marks += question.max_marks
+            
+            # Calculate percentage
+            percentage = 0
+            if total_marks > 0:
+                percentage = round((attempt.score / total_marks) * 100, 1)
+            
+            # Create exam result data
+            exam_result = {
+                'exam_name': exam.name,
+                'question_paper': attempt.qpaper.qPaperTitle if attempt.qpaper else 'N/A',
+                'score': attempt.score,
+                'total_marks': total_marks,
+                'percentage': percentage,
+                'attempt_id': attempt.id,
+                'exam_date': exam.start_time,
+            }
+            
+            # Add to student results dictionary
+            if student_username not in student_results:
+                student_results[student_username] = {
+                    'display_name': student_display_name,
+                    'exams': []
+                }
+            
+            student_results[student_username]['exams'].append(exam_result)
+    
+    # Sort students by name
+    sorted_students = dict(sorted(student_results.items()))
+    
     return render(request, 'exam/resultsstudent.html', {
-        'students':dicts
+        'student_results': sorted_students
     })
 
 @login_required(login_url='login')

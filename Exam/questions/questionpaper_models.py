@@ -11,7 +11,7 @@ class Question_Paper(models.Model):
     questions = models.ManyToManyField(Question_DB)
 
     def __str__(self):
-        return f' Question Paper Title :- {self.qPaperTitle}\n'
+        return f'{self.qPaperTitle}'
 
 
 class QPForm(ModelForm):

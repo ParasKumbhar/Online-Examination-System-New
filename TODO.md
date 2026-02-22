@@ -1,18 +1,11 @@
-# TODO: Remove Total Marks from Exam Forms
+# TODO - Faculty Student Results Enhancement
 
-## Task
-Remove total marks input from Exam create/edit forms, but keep it in Question Paper create/edit forms.
+## Tasks:
+- [x] 1. Update `view_results_prof` in Exam/questions/views.py to organize results by student with exam details
+- [x] 2. Update `resultsstudent.html` template to show Student Name with "View Results" button
+- [x] 3. Update faculty index.html to add a link to results
 
-## Steps
-- [x] 1. Update ExamForm in models.py - exclude total_marks from form
-- [x] 2. Update edit_exam_enhanced.html - remove total_marks field
-- [x] 3. Update mainexam.html - form will auto-exclude total_marks (via form)
-- [x] 4. Update editsingleexam.html - form will auto-exclude total_marks (via form)
-- [x] 5. Update previousexam.html - show total_marks from question_paper
-- [x] 6. Update views.py - use question_paper.total_marks where needed
-- [x] 7. Update notifications/models.py - use question_paper.total_marks
-- [x] 8. Update api/views.py - use question_paper.total_marks
-- [x] 9. Update api/serializers.py - use SerializerMethodField for total_marks
-
-## Summary
-Removed total marks input from Exam create/edit forms. The total marks now comes from the Question Paper instead. The Question Paper creation/edit still has the total marks input as requested.
+## Completed:
+- Updated `view_results_prof` to organize results by student with exam details (exam name, question paper, score, total marks, percentage, date)
+- Updated `resultsstudent.html` template with expandable rows showing all exam results for each student
+- Added a new "Student Marks" card in the faculty dashboard that links to the results page
