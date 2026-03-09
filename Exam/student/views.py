@@ -24,22 +24,62 @@ def index(request):
     from django.db.models import Avg, Sum
     
     student = request.user
-    
+    now = timezone.localtime()
+
+    # Ensure stored times are timezone-aware and converted to local timezone
+    def _ensure_local(dt):
+        if not dt:
+            return dt
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.get_default_timezone())
+        return timezone.localtime(dt)
     # Get ALL exams - students should see all exams created by faculty
     all_exams = Exam_Model.objects.all().order_by('start_time')
     
     # Filter out exams that the student has already completed
     upcoming_exams = []
     for exam in all_exams:
-        is_completed = StuExam_DB.objects.filter(
+        stu_exam_record = StuExam_DB.objects.filter(
             student=student,
             examname=exam.name,
-            qpaper=exam.question_paper,
-            completed=1
-        ).exists()
-        
-        if not is_completed:
-            upcoming_exams.append(exam)
+            qpaper=exam.question_paper
+        ).first()
+
+        # If this exam was previously marked completed but has been rescheduled to the future,
+        # allow the student to take it again (reset completion so it can reappear).
+        if stu_exam_record and stu_exam_record.completed == 1:
+            if exam.end_time and now < exam.end_time:
+                stu_exam_record.completed = 0
+                stu_exam_record.score = 0
+                stu_exam_record.save()
+            else:
+                continue
+
+        # Ensure exam datetime is timezone-aware and localised
+        exam.start_time = _ensure_local(exam.start_time)
+        exam.end_time = _ensure_local(exam.end_time)
+
+        # Auto-mark as missed (0 score) if exam window has passed and the student never attempted
+        if exam.end_time and now > exam.end_time:
+            if not stu_exam_record:
+                stu_exam_record = StuExam_DB.objects.create(
+                    student=student,
+                    examname=exam.name,
+                    qpaper=exam.question_paper,
+                    score=0,
+                    completed=1
+                )
+            else:
+                stu_exam_record.completed = 1
+                stu_exam_record.score = stu_exam_record.score or 0
+                stu_exam_record.save()
+            results = StuResults_DB.objects.get_or_create(student=student)[0]
+            if stu_exam_record not in results.exams.all():
+                results.exams.add(stu_exam_record)
+            continue
+
+        # If it's still upcoming or active, show it as upcoming
+        upcoming_exams.append(exam)
     
     # Get completed exams for this student
     completed_exams = StuExam_DB.objects.filter(student=student, completed=1)
@@ -98,7 +138,8 @@ def index(request):
         'upcoming_exams': upcoming_exams,
         'completed_exams': completed_exams,
         'avg_score': avg_score_percent,
-        'rank': rank
+        'rank': rank,
+        'now': now,
     }
     
     return render(request,'student/index.html', context)

@@ -249,16 +249,49 @@ def view_exams_student(request):
     exams = Exam_Model.objects.all().order_by('start_time')
     list_of_completed = []
     list_un = []
-    
+    now = timezone.localtime()
+
+    # Ensure stored times are timezone-aware and localised
+    def _ensure_aware(dt):
+        if not dt:
+            return dt
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.get_default_timezone())
+        return timezone.localtime(dt)
+
     for exam in exams:
+        exam.start_time = _ensure_aware(exam.start_time)
+        exam.end_time = _ensure_aware(exam.end_time)
         stu_exam = StuExam_DB.objects.filter(
             examname=exam.name,
             student=request.user,
-            qpaper=exam.question_paper,
-            completed=1
+            qpaper=exam.question_paper
         ).first()
-        
-        if stu_exam:
+
+        # If the exam window has passed, automatically mark as completed with zero score if not already
+        if exam.end_time and now > exam.end_time:
+            if not stu_exam:
+                stu_exam = StuExam_DB.objects.create(
+                    student=request.user,
+                    examname=exam.name,
+                    qpaper=exam.question_paper,
+                    score=0,
+                    completed=1
+                )
+            else:
+                stu_exam.completed = 1
+                stu_exam.score = stu_exam.score or 0
+                stu_exam.save()
+
+            # Add to results tracking if not already
+            results = StuResults_DB.objects.get_or_create(student=request.user)[0]
+            if stu_exam not in results.exams.all():
+                results.exams.add(stu_exam)
+
+            list_of_completed.append(exam)
+            continue
+
+        if stu_exam and stu_exam.completed == 1:
             list_of_completed.append(exam)
         else:
             list_un.append(exam)
@@ -297,7 +330,54 @@ def appear_exam(request,id):
     
     # Get the exam first
     exam = Exam_Model.objects.get(pk=id)
-    
+    now = timezone.localtime()
+
+    # Ensure stored times are timezone-aware and localised
+    def _ensure_aware(dt):
+        if not dt:
+            return dt
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.get_default_timezone())
+        return timezone.localtime(dt)
+
+    exam.start_time = _ensure_aware(exam.start_time)
+    exam.end_time = _ensure_aware(exam.end_time)
+
+    # Prevent access outside the scheduled window
+    if exam.start_time and now < exam.start_time:
+        start_local = timezone.localtime(exam.start_time).strftime("%b %d, %Y at %H:%M")
+        from django.contrib import messages
+        messages.error(request, f"The exam is accessible starting on {start_local}. Please return then.")
+        return redirect('view_exams_student')
+
+    if exam.end_time and now > exam.end_time:
+        # Auto-mark student as absent (0 score) when past end time
+        stu_exam = StuExam_DB.objects.filter(
+            student=student,
+            examname=exam.name,
+            qpaper=exam.question_paper
+        ).first()
+        if not stu_exam:
+            stu_exam = StuExam_DB.objects.create(
+                student=student,
+                examname=exam.name,
+                qpaper=exam.question_paper,
+                score=0,
+                completed=1
+            )
+        else:
+            stu_exam.completed = 1
+            stu_exam.score = stu_exam.score or 0
+            stu_exam.save()
+
+        results = StuResults_DB.objects.get_or_create(student=student)[0]
+        if stu_exam not in results.exams.all():
+            results.exams.add(stu_exam)
+
+        from django.contrib import messages
+        messages.error(request, "The exam time has ended. You have been marked absent with a score of 0.")
+        return redirect('result', id=exam.id)
+
     # Check if student has already completed this exam - prevent retake
     existing_completed = StuExam_DB.objects.filter(
         student=student,
@@ -305,7 +385,15 @@ def appear_exam(request,id):
         qpaper=exam.question_paper,
         completed=1
     ).first()
-    
+
+    # If the exam was previously marked as completed due to a missed window but has since been
+    # rescheduled to a future time, reset the completion state so the student can take it.
+    if existing_completed and exam.end_time and now < exam.end_time:
+        existing_completed.completed = 0
+        existing_completed.score = 0
+        existing_completed.save()
+        existing_completed = None
+
     if existing_completed:
         from django.contrib import messages
         messages.error(request, "You have already completed this exam. You cannot retake it.")
@@ -602,12 +690,28 @@ def edit_exam(request, id):
         return HttpResponseForbidden("You don't have permission to edit this exam.")
 
     if request.method == 'POST':
+        # Preserve original exam identifiers so we can reset student records if the schedule changes
+        original_name = exam.name
+        original_qpaper = exam.question_paper
+        original_start = exam.start_time
+        original_end = exam.end_time
+
         form = ExamForm(prof, request.POST, instance=exam)
         if form.is_valid():
             ex = form.save(commit=False)
             ex.professor = prof
             ex.save()
             form.save_m2m()
+
+            # If the exam schedule or identifying information changed, reset student completion state
+            if (
+                ex.name != original_name
+                or ex.question_paper != original_qpaper
+                or ex.start_time != original_start
+                or ex.end_time != original_end
+            ):
+                StuExam_DB.objects.filter(examname=original_name, qpaper=original_qpaper).update(completed=0, score=0)
+
             return redirect('view_exams')
     else:
         form = ExamForm(prof, instance=exam)
@@ -639,12 +743,28 @@ def edit_exam_enhanced(request, id):
         return HttpResponseForbidden("You don't have permission to edit this exam.")
 
     if request.method == 'POST':
+        # Preserve original exam identifiers so we can reset student records if the schedule changes
+        original_name = exam.name
+        original_qpaper = exam.question_paper
+        original_start = exam.start_time
+        original_end = exam.end_time
+
         form = ExamForm(prof, request.POST, instance=exam)
         if form.is_valid():
             ex = form.save(commit=False)
             ex.professor = prof
             ex.save()
             form.save_m2m()
+
+            # If the exam schedule or identifying information changed, reset student completion state
+            if (
+                ex.name != original_name
+                or ex.question_paper != original_qpaper
+                or ex.start_time != original_start
+                or ex.end_time != original_end
+            ):
+                StuExam_DB.objects.filter(examname=original_name, qpaper=original_qpaper).update(completed=0, score=0)
+
             messages.success(request, 'Exam details updated successfully!')
             return redirect('faculty-edit_exam_enhanced', id=exam.id)
     else:
