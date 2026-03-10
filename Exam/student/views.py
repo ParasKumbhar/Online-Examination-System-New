@@ -45,15 +45,9 @@ def index(request):
             qpaper=exam.question_paper
         ).first()
 
-        # If this exam was previously marked completed but has been rescheduled to the future,
-        # allow the student to take it again (reset completion so it can reappear).
+        # If student has already completed this exam, skip it (don't show in upcoming)
         if stu_exam_record and stu_exam_record.completed == 1:
-            if exam.end_time and now < exam.end_time:
-                stu_exam_record.completed = 0
-                stu_exam_record.score = 0
-                stu_exam_record.save()
-            else:
-                continue
+            continue
 
         # Ensure exam datetime is timezone-aware and localised
         exam.start_time = _ensure_local(exam.start_time)

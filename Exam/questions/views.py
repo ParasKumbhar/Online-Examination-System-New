@@ -291,16 +291,23 @@ def view_exams_student(request):
             list_of_completed.append(exam)
             continue
 
+        # Check if student has already completed this exam FIRST
+        if stu_exam and stu_exam.completed == 1:
+            list_of_completed.append(exam)
+            continue
+
         # Allow students to start the exam only during the scheduled window
         exam.can_appear = False
         if exam.start_time and now >= exam.start_time:
             if not exam.end_time or now <= exam.end_time:
                 exam.can_appear = True
 
-        if stu_exam and stu_exam.completed == 1:
-            list_of_completed.append(exam)
-        else:
+        # Only add to available exams if student can appear and hasn't completed
+        if exam.can_appear:
             list_un.append(exam)
+        else:
+            # Exam is either not started yet or has ended - add to completed
+            list_of_completed.append(exam)
 
     return render(request,'exam/mainexamstudent.html',{
         'exams':list_un,
@@ -393,14 +400,6 @@ def appear_exam(request,id):
         completed=1
     ).first()
 
-    # If the exam was previously marked as completed due to a missed window but has since been
-    # rescheduled to a future time, reset the completion state so the student can take it.
-    if existing_completed and exam.end_time and now < exam.end_time:
-        existing_completed.completed = 0
-        existing_completed.score = 0
-        existing_completed.save()
-        existing_completed = None
-
     if existing_completed:
         from django.contrib import messages
         messages.error(request, "You have already completed this exam. You cannot retake it.")
@@ -428,8 +427,21 @@ def appear_exam(request,id):
         return render(request,'exam/giveExam.html',context)
     
     if request.method == 'POST' :
-        student = User.objects.get(username=request.user.username)
+        # Get examMain from the URL id
         examMain = Exam_Model.objects.get(pk=id)
+        
+        # Double-check: prevent retake even on POST
+        already_completed = StuExam_DB.objects.filter(
+            examname=examMain.name, 
+            student=student, 
+            qpaper=examMain.question_paper,
+            completed=1
+        ).exists()
+        
+        if already_completed:
+            from django.contrib import messages
+            messages.error(request, "You have already completed this exam. You cannot retake it.")
+            return redirect('view_exams_student')
         
         stuExam = StuExam_DB.objects.filter(
             examname=examMain.name, 
@@ -710,15 +722,6 @@ def edit_exam(request, id):
             ex.save()
             form.save_m2m()
 
-            # If the exam schedule or identifying information changed, reset student completion state
-            if (
-                ex.name != original_name
-                or ex.question_paper != original_qpaper
-                or ex.start_time != original_start
-                or ex.end_time != original_end
-            ):
-                StuExam_DB.objects.filter(examname=original_name, qpaper=original_qpaper).update(completed=0, score=0)
-
             return redirect('view_exams')
     else:
         form = ExamForm(prof, instance=exam)
@@ -762,15 +765,6 @@ def edit_exam_enhanced(request, id):
             ex.professor = prof
             ex.save()
             form.save_m2m()
-
-            # If the exam schedule or identifying information changed, reset student completion state
-            if (
-                ex.name != original_name
-                or ex.question_paper != original_qpaper
-                or ex.start_time != original_start
-                or ex.end_time != original_end
-            ):
-                StuExam_DB.objects.filter(examname=original_name, qpaper=original_qpaper).update(completed=0, score=0)
 
             messages.success(request, 'Exam details updated successfully!')
             return redirect('faculty-edit_exam_enhanced', id=exam.id)
