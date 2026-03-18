@@ -192,7 +192,7 @@ class Register(View):
     
 class LoginView(View):
 	def get(self,request):
-		return render(request,'student\login.html')
+		return render(request,'student/login.html')
 	def post(self,request):
 		username = request.POST['username']
 		password = request.POST['password']
@@ -231,11 +231,11 @@ class LoginView(View):
 					return redirect('index')
 				else:
 					messages.error(request,"Account is not active")
-					return render(request,'student\login.html')
+					return render(request,'student/login.html')
 			else:
 				messages.error(request,"Invalid Credentials")
-				return render(request,'student\login.html')
-		return render(request,'student\login.html')
+				return render(request,'student/login.html')
+		return render(request,'student/login.html')
 
 class LogoutView(View):
     def get(self, request):
