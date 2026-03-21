@@ -31,8 +31,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me-in-production')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# In production, set this to your actual domain
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,testserver').split(',')
+# In production, set these to your actual domain
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://online-examination-system.up.railway.app').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,testserver,online-examination-system.up.railway.app,.railway.app').split(',')
 
 # Security Settings for Production
 if not DEBUG:
@@ -61,7 +62,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-'rest_framework',
+    'rest_framework',
+    'rest_framework_simplejwt',
+'drf_spectacular',
+    'django_filters',
+    'corsheaders',
     'core',
     'api',
     'admission',
@@ -76,6 +81,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -83,9 +89,61 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
+    'core.middleware.RateLimitMiddleware',
+    'core.middleware.IPTrackingMiddleware',
+    'core.middleware.DeviceFingerprinting',
+    'core.middleware.AuditLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'examProject.urls'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+    },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'ALLOWED_VERSIONS': ['v1', 'v2'],
+    'VERSION_PARAM': 'version',
+    'DEFAULT_VERSION': 'v1',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Online Examination System API',
+    'DESCRIPTION': 'REST API for examination system with security features',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+    },
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
+}
 
 TEMPLATES = [
     {
@@ -168,6 +226,29 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR,'static')
 
+# Enhanced Security Headers (production)
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+
+# IP Whitelisting (add admin IPs)
+IP_WHITELIST = ['127.0.0.1', '::1', '10.0.0.0/8']  # Add your admin IPs
+
+# Rate Limiting from settings_new
+RATE_LIMIT_CONFIG = {
+    'LOGIN_ATTEMPTS': 5,
+    'LOGIN_WINDOW': 300,
+    'API_CALLS': 100,
+    'API_WINDOW': 3600,
+}
+
+# 2FA from settings_new
+TWO_FACTOR_ENABLED = os.environ.get('TWO_FACTOR_ENABLED', 'True') == 'True'
+OTP_EXPIRY_TIME = int(os.environ.get('OTP_EXPIRY_TIME', 600))
+
+
 MESSAGE_TAGS = {
     messages.ERROR : 'danger',
 }
@@ -201,6 +282,33 @@ if EMAIL_HOST_USER and not EMAIL_HOST_PASSWORD:
     )
 
 # Logging for email
+
+# Cache configuration - LocMem for dev, Redis for production
+if DEBUG:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",  # Unique per-process
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+
+# CORS from settings_new
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000',
+    'http://127.0.0.1:8000',
+]
+
 import logging
 LOGGING = {
     'version': 1,

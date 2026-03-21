@@ -4,7 +4,8 @@ API Serializers for all models.
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from questions.models import Exam_Model, Question_DB
+from questions.models import Exam_Model
+from questions.question_models import Question_DB
 from questions.question_models import Question_DB as Question_Model
 from student.models import StudentInfo, Stu_Question, StuExam_DB, StuResults_DB
 from faculty.models import FacultyInfo

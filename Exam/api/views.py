@@ -12,9 +12,12 @@ from django.contrib.auth.models import User
 from django.db.models import Q, Avg, Max, Min, Count
 from django.core.cache import cache
 from datetime import datetime, timedelta
+from django.utils import timezone
 import logging
 
-from questions.models import Exam_Model, Question_DB
+
+from questions.models import Exam_Model
+from questions.question_models import Question_DB
 from student.models import StudentInfo, StuExam_DB, StuResults_DB, Stu_Question
 from faculty.models import FacultyInfo
 from .serializers import (
@@ -23,6 +26,14 @@ from .serializers import (
     ExamResultSerializer, StudentProgressSerializer, ExamAnalyticsSerializer,
     StudentExamSubmissionSerializer
 )
+from .serializers_security import (
+    LoginSerializer, OTPRequestSerializer, OTPVerifySerializer,
+    LoginAuditSerializer, JWTSerializer
+)
+from core.two_factor_auth import OTPGenerator, TwoFactorAuth
+from core.two_factor_auth import TwoFactorAuth
+from core.models import LoginAudit, AuditLog
+
 
 logger = logging.getLogger('app')
 
@@ -441,6 +452,124 @@ def questions_create(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==================== AUTHENTICATION & 2FA ENDPOINTS ====================
+
+@api_view(['POST'])
+def api_login(request):
+    """
+    JWT Login with optional 2FA.
+    POST /api/v1/auth/login/
+    Returns JWT tokens on success.
+    Triggers 2FA on suspicious login.
+    """
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.validated_data['user']
+        
+        # Check audit ID from middleware
+        audit_id = getattr(request, '_login_audit_id', None)
+        if audit_id:
+            audit = LoginAudit.objects.get(id=audit_id)
+            audit.success = True
+            audit.user = user
+            audit.save()
+        
+        # Check if 2FA required (suspicious login)
+        if TwoFactorAuth.is_2fa_required(user):
+            TwoFactorAuth.clear_2fa_requirement(user)
+            return Response({
+                'message': 'Login successful, 2FA required',
+                'requires_2fa': True,
+                'username': user.username,
+                'email': user.email
+            }, status=status.HTTP_202_ACCEPTED)
+        
+        # Generate JWT
+        refresh = JWTSerializer.get_token(user)
+        return Response({
+            'message': 'Login successful',
+            'access': str(refresh.access_token),
+            'refresh': str(refresh)
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['POST'])
+def otp_request(request):
+    """
+    Request OTP via email.
+    POST /api/v1/auth/otp/request/
+    """
+    serializer = OTPRequestSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        result = OTPGenerator.send_email_otp(email)
+        
+        AuditLog.objects.create(
+            user=None,
+            action='OTP_REQUEST',
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            details={'email': email}
+        )
+        
+        if result['success']:
+            return Response({
+                'message': result['message'],
+                'email_sent': True
+            })
+        return Response({'error': result['message']}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def otp_verify(request):
+    """
+    Verify OTP and get JWT tokens.
+    POST /api/v1/auth/otp/verify/
+    """
+    serializer = OTPVerifySerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp']
+        
+        result = OTPGenerator.verify_otp(email, otp)
+        if result['valid']:
+            # Get user by email
+            user = User.objects.get(email=email, is_active=True)
+            
+            # Generate JWT
+            refresh = JWTSerializer.get_token(user)
+            return Response({
+                'message': '2FA verified, login successful',
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email
+                }
+            })
+        
+        return Response({'error': result['message']}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAdmin])
+def login_audits(request):
+    """
+    List recent login audits.
+    GET /api/v1/auth/audits/
+    """
+    audits = LoginAudit.objects.all()[:100]  # Last 100
+    serializer = LoginAuditSerializer(audits, many=True)
+    return Response(serializer.data)
 
 
 # ==================== ANTI-CHEATING ENDPOINTS ====================

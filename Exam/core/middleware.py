@@ -10,6 +10,7 @@ from django.utils.deprecation import MiddlewareMixin
 from django.core.cache import cache
 from django.contrib.auth.models import AnonymousUser
 from datetime import datetime, timedelta
+from django.utils import timezone
 
 security_logger = logging.getLogger('security')
 app_logger = logging.getLogger('app')
@@ -124,7 +125,7 @@ class RateLimitMiddleware(MiddlewareMixin):
     """
     
     RATE_LIMITS = {
-        'login': (5, 300),  # 5 attempts per 5 minutes
+        # 'login': (5, 300),  # DISABLED - was 5 attempts per 5 minutes
         'api': (100, 3600),  # 100 requests per hour
     }
     
@@ -133,11 +134,9 @@ class RateLimitMiddleware(MiddlewareMixin):
         
         ip = self.get_client_ip(request)
         
-        # Rate limit login attempts
-        if 'login' in request.path:
-            return self.check_rate_limit(ip, 'login', request)
+        # Rate limit API endpoints only (login rate limiting DISABLED)
+        # Disabled login rate limiting as per request
         
-        # Rate limit API endpoints
         if request.path.startswith('/api/'):
             return self.check_rate_limit(ip, 'api', request)
         
@@ -241,3 +240,104 @@ class DeviceFingerprinting(MiddlewareMixin):
         fingerprint = hashlib.sha256(fingerprint_str.encode()).hexdigest()
         
         return fingerprint
+
+
+class IPWhitelistMiddleware(MiddlewareMixin):
+    """IP Whitelisting middleware."""
+    
+    def process_request(self, request):
+        from core.models import IPWhitelist
+        
+        ip = self.get_client_ip(request)
+        
+        # Check admin/login/API auth paths
+        protected_paths = ['/admin/', '/api/v1/auth/', '/api/v2/auth/']
+        if any(request.path.startswith(p) for p in protected_paths):
+            whitelisted_ips = list(IPWhitelist.objects.filter(is_active=True).values_list('ip_address', flat=True))
+            if ip not in whitelisted_ips:
+                security_logger.warning(f'IP not whitelisted: {ip} on {request.path}')
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    action='IP_BLOCKED',
+                    ip_address=ip,
+                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                    success=False,
+                    details={'path': request.path}
+                )
+                return JsonResponse({'error': 'Access denied: IP not whitelisted'}, status=403)
+        
+        request._client_ip = ip
+        return None
+    
+    @staticmethod
+    def get_client_ip(request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR', 'Unknown')
+
+
+class SuspiciousLoginMiddleware(MiddlewareMixin):
+    """Detect suspicious logins and log to audit. Triggers 2FA."""
+    
+    LOGIN_PATHS = ['/api/v1/auth/login/', '/api/v2/auth/login/', '/admin/login', '/student/login', '/faculty/login']
+    
+    def process_request(self, request):
+        if any(request.path.startswith(p) for p in self.LOGIN_PATHS) and request.method == 'POST':
+            ip = getattr(request, '_client_ip', self.get_client_ip(request))
+            ua = request.META.get('HTTP_USER_AGENT', 'Unknown')
+            fingerprint = getattr(request, 'device_fingerprint', 'unknown')
+            
+            is_suspicious = self.is_suspicious_login(request, ip, fingerprint)
+            
+            # Always log login attempt
+            from core.models import LoginAudit
+            audit = LoginAudit.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                ip_address=ip,
+                user_agent=ua,
+                device_fingerprint=fingerprint,
+                success=False,  # Updated post-auth
+                suspicious=is_suspicious,
+                reason='New IP/device/location' if is_suspicious else 'Normal login'
+            )
+            
+            if is_suspicious and request.user.is_authenticated:
+                # Trigger 2FA for suspicious logins
+                from core.two_factor_auth import TwoFactorAuth
+                TwoFactorAuth.require_2fa_verification(request.user)
+                audit.reason += '; 2FA required'
+                audit.save()
+                security_logger.warning(f'Suspicious login detected for {request.user}: {ip} - 2FA triggered')
+            
+            request._login_audit_id = audit.id
+            request._login_audit_suspicious = is_suspicious
+        
+        return None
+    
+    def is_suspicious_login(self, request, ip, fingerprint):
+        user_ips = request.session.get('user_ips', [])
+        session_fp = request.session.get('device_fingerprint')
+        
+        # New IP or device
+        is_new_ip = ip not in user_ips
+        is_new_device = fingerprint != session_fp
+        
+        # Multiple failed attempts from same IP (check recent audits)
+        from core.models import LoginAudit
+        recent_fails = LoginAudit.objects.filter(
+            ip_address=ip, success=False
+        ).filter(timestamp__lt=datetime.now(),
+            timestamp__gte=datetime.now() - timedelta(minutes=15)
+        ).count()
+        
+        return is_new_ip or is_new_device or recent_fails > 3
+    
+    @staticmethod
+    def get_client_ip(request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR', 'Unknown')
+

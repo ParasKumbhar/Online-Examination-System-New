@@ -10,6 +10,12 @@ from . import views
 app_name = 'api'
 
 urlpatterns = [
+    # Auth endpoints
+    path('v1/auth/login/', views.api_login, name='api-login'),
+    path('v1/auth/otp/request/', views.otp_request, name='otp-request'),
+    path('v1/auth/otp/verify/', views.otp_verify, name='otp-verify'),
+    path('v1/auth/audits/', views.login_audits, name='login-audits'),
+    
     # Exam endpoints
     path('v1/exams/', views.exam_list_create, name='exam-list-create'),
     path('v1/exams/<int:exam_id>/', views.exam_detail, name='exam-detail'),

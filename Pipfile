@@ -4,13 +4,28 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "*"
-bcrypt = "*"
-pillow = "*"
-validate-email = "*"
+Django = ">=6.0.3"
 djangorestframework = "*"
+numpy = "*"
+pandas = "*"
+argon2-cffi = "*"
+asgiref = "*"
+bcrypt = "*"
+cffi = "*"
+openpyxl = "*"
+Pillow = "*"
 python-dotenv = "*"
+pytz = "*"
+six = "*"
+sqlparse = "*"
+validate-email = "*"
 apscheduler = "*"
+django-otp = "*"
+qrcode = "*"
+djangorestframework-simplejwt = ">=5.3.1,<6.0"
+drf-spectacular = "==0.27.2"
+django-filter = "==24.3"
+django-cors-headers = "==4.5.0"
 
 [dev-packages]
 

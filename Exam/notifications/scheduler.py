@@ -161,11 +161,11 @@ def start_exam_reminder_scheduler():
         replace_existing=True
     )
 
-    # Schedule 1-hour reminder check every 1 minute (more responsive reminder delivery)
+    # Schedule 1-hour reminder check every 5 minutes (more responsive reminder delivery)
     scheduler.add_job(
         send_exam_reminders_1hr,
         'interval',
-        seconds=1,
+        minutes=5,
         id='exam_reminder_1hr',
         name='1-hour exam reminders',
         replace_existing=True
