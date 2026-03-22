@@ -103,7 +103,7 @@
                                     </button>
                                 {% else %}
                                     <a href="{% url 'appear-exam' exam.id %}" 
-                                       onclick="window.open(this.href, '_blank', 'width=800,height=800'); return false;"
+                                       onclick="openExamFullscreen(this.href); return false;"
                                        class="inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg text-sm font-medium transition-colors">
                                         Take Exam
                                     </a>
@@ -146,4 +146,101 @@
         </div>
     </div>
 </div>
+
+<script>
+    function openExamFullscreen(url) {
+        // Standalone window dimensions (fullscreen screen area)
+        var width = window.screen.availWidth || window.screen.width;
+        var height = window.screen.availHeight || window.screen.height;
+        var features = 'toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=' + width + ',height=' + height + ',left=0,top=0';
+
+        var examWindow = window.open(url, 'examWindow', features);
+        if (!examWindow) {
+            alert('Popup blocked! Please allow popups for this site and try again.');
+            return;
+        }
+
+        examWindow.moveTo(0, 0);
+        examWindow.resizeTo(width, height);
+        examWindow.focus();
+
+        function requestQuizFullScreen() {
+            try {
+                var elem = examWindow.document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            } catch (err) {
+                console.log('Fullscreen request failed:', err);
+            }
+        }
+
+        requestQuizFullScreen();
+
+        examWindow.addEventListener('load', function() {
+            requestQuizFullScreen();
+            examWindow.document.addEventListener('fullscreenchange', function() {
+                if (!examWindow.document.fullscreenElement) {
+                    showExamFullscreenOverlay(examWindow);
+                }
+            });
+        });
+
+        var focusChecker = setInterval(function() {
+            try {
+                if (examWindow.closed) {
+                    clearInterval(focusChecker);
+                    return;
+                }
+                if (!examWindow.document.hasFocus()) {
+                    examWindow.focus();
+                }
+            } catch (e) {
+                clearInterval(focusChecker);
+            }
+        }, 750);
+    }
+
+    function showExamFullscreenOverlay(win) {
+        try {
+            var doc = win.document;
+            if (!doc) return;
+
+            if (doc.getElementById('fullscreen-fallback-mask')) return;
+
+            var overlay = doc.createElement('div');
+            overlay.id = 'fullscreen-fallback-mask';
+            overlay.style.position = 'fixed';
+            overlay.style.top = 0;
+            overlay.style.left = 0;
+            overlay.style.right = 0;
+            overlay.style.bottom = 0;
+            overlay.style.background = 'rgba(0,0,0,0.78)';
+            overlay.style.display = 'flex';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+            overlay.style.zIndex = 99999;
+            overlay.innerHTML = '<div style="text-align:center; color:#fff; font-size:1.2rem; max-width:560px; padding:24px; background:#111; border-radius:14px;"><p>Exam fullscreen was exited. Please click below to re-enter fullscreen and continue.</p><button id="forceFullscreenBtn" style="margin-top:16px;padding:12px 24px;font-size:1rem;border:none;border-radius:8px;background:#2d7cff;color:#fff;cursor:pointer;">Re-enter Fullscreen</button></div>';
+
+            doc.body.appendChild(overlay);
+            doc.getElementById('forceFullscreenBtn').addEventListener('click', function() {
+                if (doc.documentElement.requestFullscreen) {
+                    doc.documentElement.requestFullscreen();
+                } else if (doc.documentElement.webkitRequestFullscreen) {
+                    doc.documentElement.webkitRequestFullscreen();
+                } else if (doc.documentElement.msRequestFullscreen) {
+                    doc.documentElement.msRequestFullscreen();
+                }
+                overlay.remove();
+            });
+        } catch (err) {
+            console.log('Failed to show fullscreen fallback overlay', err);
+        }
+    }
+</script>
+
 {% endblock %}

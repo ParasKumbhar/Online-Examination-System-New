@@ -32,6 +32,7 @@ urlpatterns = [
 
     # Anti-Cheating endpoints
     path('v1/exams/<int:exam_id>/focus-loss/', views.record_focus_loss, name='record-focus-loss'),
+    path('v1/exams/<int:exam_id>/fullscreen-exit/', views.record_fullscreen_exit, name='fullscreen-exit'),
     path('v1/exams/<int:exam_id>/focus-status/', views.get_focus_status, name='focus-status'),
     path('v1/exams/<int:exam_id>/validate-timestamp/', views.validate_submission_timestamp, name='validate-timestamp'),
 

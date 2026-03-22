@@ -4,6 +4,9 @@ from .models import *
 from django.contrib.auth.models import Group
 from student.models import *
 from django.utils import timezone
+import random
+from django.core.mail import send_mail
+from django.conf import settings
 from student.models import StuExam_DB,StuResults_DB
 from questions.questionpaper_models import QPForm
 from questions.question_models import QForm
@@ -405,151 +408,170 @@ def appear_exam(request,id):
         messages.error(request, "You have already completed this exam. You cannot retake it.")
         return redirect('view_exams_student')
     
-    if request.method == 'GET':
-        time_delta = exam.end_time - exam.start_time
-        time = convert(time_delta.seconds)
-        time = time.split(":")
-        mins = time[0]
-        secs = time[1]
-        
-        existing_exam = StuExam_DB.objects.filter(student=student, examname=exam.name, completed=0).first()
-        
-        if existing_exam:
-            pass
-        
-        context = {
-            "exam":exam,
-            "question_list":exam.question_paper.questions.all(),
-            "secs":secs,
-            "mins":mins,
-            "hide_sidebar": True
+    # Create or retrieve the exam session with randomized question/order state
+    def _get_client_ip(req):
+        x_forwarded_for = req.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0].strip()
+        return req.META.get('REMOTE_ADDR', '0.0.0.0')
+
+    from questions.anticheating_models import ExamSession, ExamSecurityAlert
+    from questions.question_models import Question_DB
+
+    exam_session, created_session = ExamSession.objects.get_or_create(
+        student=student,
+        exam=exam,
+        defaults={
+            'duration_seconds': int((exam.end_time - exam.start_time).total_seconds()),
+            'ends_at': exam.end_time,
+            'ip_address': _get_client_ip(request),
+            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
         }
-        return render(request,'exam/giveExam.html',context)
-    
-    if request.method == 'POST' :
-        # Get examMain from the URL id
-        examMain = Exam_Model.objects.get(pk=id)
-        
-        # Double-check: prevent retake even on POST
+    )
+
+    if created_session or not exam_session.question_order:
+        all_questions = list(exam.question_paper.questions.all())
+        question_order = [q.qno for q in all_questions]
+        random.shuffle(question_order)
+
+        option_order = {}
+        for q in all_questions:
+            opts = ['A', 'B', 'C', 'D']
+            random.shuffle(opts)
+            option_order[str(q.qno)] = opts
+
+        exam_session.question_order = question_order
+        exam_session.option_order = option_order
+        exam_session.ends_at = exam.end_time
+        exam_session.save()
+
+    # Evaluate remaining time as seconds from now
+    remaining_timedelta = max(0, int((exam.end_time - now).total_seconds()))
+    mins = remaining_timedelta // 60
+    secs = remaining_timedelta % 60
+
+    if request.method == 'GET':
+        ordered_questions = []
+        for qno in exam_session.question_order:
+            q = Question_DB.objects.get(qno=qno)
+            mapped_options = []
+            for letter in exam_session.option_order.get(str(qno), ['A', 'B', 'C', 'D']):
+                mapped_options.append({'choice': letter, 'text': getattr(q, 'option' + letter)})
+
+            ordered_questions.append({
+                'qno': q.qno,
+                'question': q.question,
+                'max_marks': q.max_marks,
+                'options': mapped_options
+            })
+
+        context = {
+            'exam': exam,
+            'question_list': ordered_questions,
+            'secs': secs,
+            'mins': mins,
+            'exam_session_id': exam_session.id,
+            'hide_sidebar': True
+        }
+        return render(request, 'exam/giveExam.html', context)
+
+    if request.method == 'POST':
+        # Prevent retake and timeout
+        if now > exam.end_time:
+            from django.contrib import messages
+            messages.error(request, 'Time expired; exam has been auto-submitted.')
+            # Mark session as submitted, no score update
+            exam_session.mark_submitted()
+            return redirect('result', id=exam.id)
+
+        if exam_session.is_submitted:
+            from django.contrib import messages
+            messages.error(request, 'This exam session has already been submitted.')
+            return redirect('view_exams_student')
+
         already_completed = StuExam_DB.objects.filter(
-            examname=examMain.name, 
-            student=student, 
-            qpaper=examMain.question_paper,
+            examname=exam.name,
+            student=student,
+            qpaper=exam.question_paper,
             completed=1
         ).exists()
-        
+
         if already_completed:
             from django.contrib import messages
-            messages.error(request, "You have already completed this exam. You cannot retake it.")
+            messages.error(request, 'You have already completed this exam. You cannot retake it.')
             return redirect('view_exams_student')
-        
-        stuExam = StuExam_DB.objects.filter(
-            examname=examMain.name, 
-            student=student, 
-            qpaper=examMain.question_paper,
-            completed=0
-        ).first()
-        
-        if not stuExam:
-            stuExam = StuExam_DB.objects.get_or_create(
-                examname=examMain.name, 
-                student=student, 
-                qpaper=examMain.question_paper,
-                completed=0
-            )[0]
-        
-        qPaper = examMain.question_paper
-        stuExam.qpaper = qPaper
-        
-        qPaperQuestionsList = list(examMain.question_paper.questions.all())
-        
-        for ques in qPaperQuestionsList:
-            student_question = Stu_Question(
+
+        # Create or continue existing StuExam_DB row
+        stuExam, _ = StuExam_DB.objects.get_or_create(
+            examname=exam.name,
+            student=student,
+            qpaper=exam.question_paper,
+            defaults={'completed': 0, 'score': 0}
+        )
+
+        stuExam.qpaper = exam.question_paper
+
+        # Persist student question snapshots in result table (optional)
+        for qno in exam_session.question_order:
+            try:
+                qrec = Question_DB.objects.get(qno=qno)
+            except Question_DB.DoesNotExist:
+                continue
+
+            student_question = Stu_Question.objects.create(
                 student=student,
-                question=ques.question, 
-                optionA=ques.optionA, 
-                optionB=ques.optionB,
-                optionC=ques.optionC, 
-                optionD=ques.optionD,
-                answer=ques.answer
+                question=qrec.question,
+                optionA=qrec.optionA,
+                optionB=qrec.optionB,
+                optionC=qrec.optionC,
+                optionD=qrec.optionD,
+                answer=qrec.answer
             )
-            student_question.save()
             stuExam.questions.add(student_question)
-        
+
+        # Score calculation from server-side data and form values
+        examScore = 0
+        for qno in exam_session.question_order:
+            try:
+                qrec = Question_DB.objects.get(qno=qno)
+            except Question_DB.DoesNotExist:
+                continue
+
+            answer_key = 'answer_{}'.format(qno)
+            selected = request.POST.get(answer_key, '').upper().strip()
+            if selected and selected == qrec.answer.upper():
+                examScore += qrec.max_marks
+
+            stu_q = stuExam.questions.filter(question=qrec.question).last()
+            if stu_q:
+                stu_q.choice = selected
+                stu_q.save()
+
+        stuExam.score = examScore
         stuExam.completed = 1
         stuExam.save()
-        
-        # Calculate exam score - iterate over POST data directly
-        examScore = 0
-        
-        # Create a mapping of question text to question details for easy lookup
-        # Store both original and stripped versions for robust matching
-        question_map = {}
-        for q in qPaperQuestionsList:
-            # Store original question text
-            question_map[q.question] = {
-                'max_marks': q.max_marks,
-                'answer': q.answer.upper() if q.answer else ''
-            }
-            # Also store stripped version
-            question_map[q.question.strip()] = {
-                'max_marks': q.max_marks,
-                'answer': q.answer.upper() if q.answer else ''
-            }
-        
-        # Iterate over POST data to find answers
-        for key, value in request.POST.items():
-            # Skip non-question fields
-            if key.lower() in ['csrfmiddlewaretoken', 'paper', '']:
-                continue
-            
-            # Get selected answer - convert to uppercase for comparison
-            if not value:
-                continue
-            selected_answer = value.upper()
-            
-            # Look up the question in our map (try both original and stripped)
-            q_info = None
-            if key in question_map:
-                q_info = question_map[key]
-            elif key.strip() in question_map:
-                q_info = question_map[key.strip()]
-            
-            if q_info:
-                max_m = q_info['max_marks']
-                correct_ans = q_info['answer']
-                
-                # Compare answers (both already uppercase)
-                if selected_answer == correct_ans:
-                    examScore += max_m
-                
-                # Update the student question choice
-                stu_q = stuExam.questions.filter(question=key).first()
-                if not stu_q:
-                    stu_q = stuExam.questions.filter(question=key.strip()).first()
-                if stu_q:
-                    stu_q.choice = selected_answer
-                    stu_q.save()
 
-        # Update the score
-        stuExam.score = examScore
-        stuExam.save()
-        
-        # Save to results
-        stu = StuExam_DB.objects.filter(
-            student=request.user, 
-            examname=examMain.name,
-            qpaper=examMain.question_paper,
-            completed=1
-        ).first()
-        
-        if stu:
-            results = StuResults_DB.objects.get_or_create(student=request.user)[0]
-            results.exams.add(stu)
-            results.save()
-        
-        # Redirect to result page to show the score
-        return redirect('result', id=examMain.id)
+        # Mark exam session submitted
+        exam_session.mark_submitted()
+
+        # Add to results table
+        results = StuResults_DB.objects.get_or_create(student=student)[0]
+        results.exams.add(stuExam)
+
+        # Flag if suspicious events exceeded
+        if exam_session.tab_switch_count >= 5 or exam_session.fullscreen_exit_count >= 3:
+            alert_reason = 'Tab switches: {}, fullscreen exits: {}'.format(
+                exam_session.tab_switch_count, exam_session.fullscreen_exit_count
+            )
+            ExamSecurityAlert.objects.create(
+                student=student,
+                exam=exam,
+                alert_type='AUTO_SUBMIT_SUSPICION',
+                level='CRITICAL',
+                message=alert_reason
+            )
+
+        return redirect('result', id=exam.id)
 
 @login_required(login_url='login')
 def result(request,id):

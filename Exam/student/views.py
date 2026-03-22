@@ -210,6 +210,18 @@ class LoginView(View):
 			if user:
 				if user.is_active:
 					auth.login(request,user)
+					# Single session enforcement
+					from django.contrib.sessions.models import Session
+					from core.models import ActiveUserSession
+					current_session_key = request.session.session_key
+					if not current_session_key:
+						request.session.create()
+						current_session_key = request.session.session_key
+					ActiveUserSession.objects.update_or_create(
+						user=user,
+						defaults={'session_key': current_session_key}
+					)
+
 					email = user.email
 
 					email_subject = 'You Logged into your Portal account'

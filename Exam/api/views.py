@@ -11,6 +11,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.contrib.auth.models import User
 from django.db.models import Q, Avg, Max, Min, Count
 from django.core.cache import cache
+from django.core.mail import send_mail
+from django.conf import settings
 from datetime import datetime, timedelta
 from django.utils import timezone
 import logging
@@ -593,7 +595,7 @@ def record_focus_loss(request, exam_id):
         exam = Exam_Model.objects.get(id=exam_id)
 
         # Check if exam is still active
-        now = datetime.now()
+        now = timezone.now()
         if now > exam.end_time:
             return Response(
                 {'error': 'Exam has ended', 'action': 'submit_immediately'},
@@ -622,6 +624,29 @@ def record_focus_loss(request, exam_id):
         # Update focus loss count
         focus_log.record_focus_loss()
 
+        # Update related exam session
+        from questions.anticheating_models import ExamSession
+        exam_session = ExamSession.objects.filter(student=request.user, exam=exam).first()
+        if exam_session:
+            exam_session.record_tab_switch()
+
+        # Send immediate alert email when count increases
+        try:
+            send_mail(
+                subject=f"[Security Alert] {exam.name}: Tab switches detected ({focus_log.focus_loss_count})",
+                message=(
+                    f"Student: {request.user.get_full_name() or request.user.username}\n"
+                    f"Exam: {exam.name}\n"
+                    f"Tab switches: {focus_log.focus_loss_count}\n"
+                    f"Timestamp: {datetime.utcnow().isoformat()}Z\n"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[exam.professor.email],
+                fail_silently=True
+            )
+        except Exception as email_err:
+            logger.error(f"Cheating alert email failed: {email_err}")
+
         response_data = {
             'success': True,
             'focus_loss_count': focus_log.focus_loss_count,
@@ -629,11 +654,47 @@ def record_focus_loss(request, exam_id):
             'exceeded': focus_log.exceeded_max_losses()
         }
 
-        if focus_log.exceeded_max_losses():
-            response_data['warning'] = 'Maximum focus losses exceeded! Your exam will be submitted automatically.'
+        # Show warnings after each switch
+        if focus_log.focus_loss_count > 0:
+            response_data['warning'] = f'Warning: You have switched tabs {focus_log.focus_loss_count} time(s). Maximum allowed: {focus_log.max_focus_losses}. (Faculty will be notified at >=5)'
+
+        # At the threshold (5): fire alert & auto-submit
+        if focus_log.focus_loss_count >= focus_log.max_focus_losses:
             response_data['action'] = 'submit_immediately'
-        elif focus_log.focus_loss_count >= focus_log.max_focus_losses:
-            response_data['warning'] = f'Warning: You have reached the maximum number of allowed focus losses ({focus_log.max_focus_losses}). One more loss and your exam will be submitted.'
+            response_data['summary'] = 'Threshold reached: exam auto-submitting.'
+
+            if focus_log.focus_loss_count == focus_log.max_focus_losses:
+                try:
+                    send_mail(
+                        subject=f"[Cheating Alert] {exam.name}: {request.user.username} switched tabs {focus_log.focus_loss_count} times",
+                        message=(
+                            f"Student: {request.user.get_full_name() or request.user.username}\n"
+                            f"Exam: {exam.name}\n"
+                            f"Tab switches: {focus_log.focus_loss_count}\n"
+                            f"Timestamp: {datetime.utcnow().isoformat()}Z\n"
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[exam.professor.email],
+                        fail_silently=True
+                    )
+                except Exception as email_err:
+                    logger.error(f"Cheating alert email failed: {email_err}")
+
+            # Auto-submit on suspicion
+            session = ExamSession.objects.filter(student=request.user, exam=exam).first()
+            if session and not session.is_submitted:
+                session.mark_submitted()
+                stu, _ = StuExam_DB.objects.get_or_create(
+                    student=request.user,
+                    examname=exam.name,
+                    qpaper=exam.question_paper,
+                    defaults={'completed':1,'score':0}
+                )
+                stu.completed = 1
+                stu.score = stu.score or 0
+                stu.save()
+                results = StuResults_DB.objects.get_or_create(student=request.user)[0]
+                results.exams.add(stu)
 
         logger.warning(
             f'Focus loss recorded: {request.user.username} in exam {exam.name} '
@@ -647,6 +708,69 @@ def record_focus_loss(request, exam_id):
     except Exception as e:
         logger.error(f'Error recording focus loss: {str(e)}')
         return Response({'error': 'Failed to record focus loss'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated, IsStudent])
+def record_fullscreen_exit(request, exam_id):
+    """Record fullscreen exit event and log suspicious activity."""
+    try:
+        exam = Exam_Model.objects.get(id=exam_id)
+        now = timezone.now()
+        if now > exam.end_time:
+            return Response({'error': 'Exam has ended', 'action': 'submit_immediately'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from questions.anticheating_models import ExamSession, ExamSecurityAlert
+
+        session = ExamSession.objects.filter(student=request.user, exam=exam).first()
+        if not session:
+            session = ExamSession.objects.create(
+                student=request.user,
+                exam=exam,
+                duration_seconds=int((exam.end_time - exam.start_time).total_seconds()),
+                ends_at=exam.end_time,
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+
+        session.record_fullscreen_exit()
+
+        send_mail(
+            subject=f"[Security Alert] {exam.name}: Fullscreen exit #{session.fullscreen_exit_count}",
+            message=(
+                f"Student: {request.user.get_full_name() or request.user.username}\n"
+                f"Exam: {exam.name}\n"
+                f"Fullscreen exits: {session.fullscreen_exit_count}\n"
+                f"Timestamp: {datetime.utcnow().isoformat()}Z\n"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[exam.professor.email],
+            fail_silently=True
+        )
+
+        response = {
+            'success': True,
+            'fullscreen_exit_count': session.fullscreen_exit_count,
+            'exceeded': session.fullscreen_exit_count >= 3
+        }
+
+        if session.fullscreen_exit_count >= 3:
+            response['action'] = 'review_or_autosubmit'
+            ExamSecurityAlert.objects.create(
+                student=request.user,
+                exam=exam,
+                alert_type='FULLSCREEN_EXIT',
+                level='WARNING',
+                message='Repeated fullscreen exits detected.'
+            )
+
+        return Response(response, status=status.HTTP_200_OK)
+
+    except Exam_Model.DoesNotExist:
+        return Response({'error': 'Exam not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error recording fullscreen exit: {str(e)}')
+        return Response({'error': 'Failed to record fullscreen exit'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

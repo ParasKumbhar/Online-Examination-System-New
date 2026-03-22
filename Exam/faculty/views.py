@@ -103,6 +103,17 @@ class LoginView(View):
 				has_grp = has_group(user_ch,"Professor")
 			if user and user.is_active and exis and has_grp:
 				auth.login(request,user)
+				# Single session enforcement
+				from django.contrib.sessions.models import Session
+				from core.models import ActiveUserSession
+				current_session_key = request.session.session_key
+				if not current_session_key:
+					request.session.create()
+					current_session_key = request.session.session_key
+				ActiveUserSession.objects.update_or_create(
+					user=user,
+					defaults={'session_key': current_session_key}
+				)
 				messages.success(request,"Welcome, "+ user.username + ". You are now logged in.")
 				return redirect('faculty-index')
 			elif not has_grp and exis:

@@ -23,6 +23,7 @@
     <form method="post" action="" class="space-y-6" id="examForm">
         {% csrf_token %}
         <input type="hidden" name="paper" value="{{ exam.name }}">
+        <input type="hidden" name="exam_session_id" value="{{ exam_session_id }}">
         
         {% for question in question_list %}
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -35,25 +36,12 @@
             </div>
             
             <div class="p-6 space-y-3">
+                {% for opt in question.options %}
                 <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="A" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
-                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionA }}</span>
+                    <input type="radio" name="answer_{{ question.qno }}" value="{{ opt.choice }}" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                    <span class="text-slate-700 group-hover:text-slate-900">{{ opt.text }}</span>
                 </label>
-                
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="B" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
-                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionB }}</span>
-                </label>
-                
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="C" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
-                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionC }}</span>
-                </label>
-                
-                <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition-all group">
-                    <input type="radio" name="{{ question.question }}" value="D" class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
-                    <span class="text-slate-700 group-hover:text-slate-900">{{ question.optionD }}</span>
-                </label>
+                {% endfor %}
             </div>
         </div>
         {% endfor %}
@@ -271,14 +259,29 @@
     })();
 </script>
 
-<!-- ANTI-CHEATING: Focus Loss Detection -->
+<!-- ANTI-CHEATING: Focus and Fullscreen Enforcement -->
 <script>
-    var focusLossCount = 0;
-    var maxFocusLosses = 3;
     var examId = "{{ exam.id }}";
     var focusDetectionEnabled = true;
+    var hasFullscreen = false;
+    var fullscreenEnforced = true;
+    var examWindow = window;
 
-    // Log focus loss events to server
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     function recordFocusLossToServer(eventType) {
         if (!focusDetectionEnabled) return;
 
@@ -297,77 +300,278 @@
         .then(function(response) { return response.json(); })
         .then(function(data) {
             if (data.exceeded) {
-                focusDetectionEnabled = false;  // Prevent further logging
-                alert('⚠️ CRITICAL: Maximum focus losses exceeded! Your exam will be submitted automatically.');
-                // Submit form immediately
+                focusDetectionEnabled = false;
+                alert('⚠️ CRITICAL: Maximum focus losses exceeded! Submitting exam automatically.');
                 setTimeout(function() {
                     document.querySelector('form').dispatchEvent(new Event('submit', {cancelable: true}));
-                }, 1000);
+                }, 800);
             } else if (data.warning) {
                 showFocusWarning(data.warning + ' (' + data.focus_loss_count + '/' + data.max_allowed + ')');
             }
-            console.log('Focus loss recorded:', data);
         })
         .catch(function(error) {
             console.error('Error recording focus loss:', error);
         });
     }
 
-    // Show warning message for focus loss
+    function recordFullscreenExit() {
+        fetch('/api/v1/exams/' + examId + '/fullscreen-exit/', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ event_type: 'FULLSCREEN_EXIT', browser_timestamp: new Date().toISOString() })
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.exceeded) {
+                showFocusWarning('⚠️ Repeated fullscreen exits detected; exam will be reviewed.');
+            }
+        })
+        .catch(function(err) {
+            console.error('Fullscreen exit reporting failed', err);
+        });
+    }
+
     function showFocusWarning(message) {
         var warning = document.createElement('div');
         warning.className = 'fixed top-40 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-bounce';
-        warning.innerHTML = '<i class="fa-solid fa-exclamation-circle"></i> ' + message;
+        warning.textContent = message;
         document.body.appendChild(warning);
 
-        setTimeout(function() {
-            warning.remove();
-        }, 4000);
+        setTimeout(function() { warning.remove(); }, 4000);
     }
 
-    // Detect tab/window visibility changes
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            console.log('Page hidden - tab switched away');
-            recordFocusLossToServer('VISIBILITY');
+    // Aggressive fullscreen enforcement
+    function enforceFullscreen() {
+        if (!document.fullscreenElement && fullscreenEnforced) {
+            requestFullscreenMode();
+            setTimeout(enforceFullscreen, 1000); // Retry every second if not in fullscreen
         }
-    });
+    }
 
-    // Detect window focus loss
-    window.addEventListener('blur', function() {
-        console.log('Window lost focus');
-        recordFocusLossToServer('WINDOW_BLUR');
-    });
-
-    // Optional: Track if user clicks outside the browser window
-    window.addEventListener('focus', function() {
-        console.log('Window regained focus');
-    });
-
-    // Prevent common cheating methods
-    document.addEventListener('keydown', function(e) {
-        // Prevent Alt+Tab in some cases (limited effect)
-        if (e.altKey && e.keyCode === 9) {
-            console.log('Alt+Tab detected - focus loss will be logged by visibility API');
+    function requestFullscreenMode() {
+        var docElm = document.documentElement;
+        if (docElm.requestFullscreen) {
+            docElm.requestFullscreen().catch(function(err) {
+                console.log('Fullscreen request failed:', err);
+            });
+        } else if (docElm.webkitRequestFullscreen) {
+            docElm.webkitRequestFullscreen();
+        } else if (docElm.msRequestFullscreen) {
+            docElm.msRequestFullscreen();
         }
-    });
+    }
 
-    // Load current focus status on page load
+    function showFullscreenFallbackPrompt() {
+        if (document.getElementById('fullscreen-fallback-mask')) return;
+
+        var overlay = document.createElement('div');
+        overlay.id = 'fullscreen-fallback-mask';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.right = '0';
+        overlay.style.bottom = '0';
+        overlay.style.background = 'rgba(0,0,0,0.85)';
+        overlay.style.zIndex = '99999';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+
+        var box = document.createElement('div');
+        box.style.background = '#fff';
+        box.style.padding = '20px';
+        box.style.borderRadius = '12px';
+        box.style.maxWidth = '580px';
+        box.style.textAlign = 'center';
+        box.innerHTML = '<p style="font-size:1.2rem;color:#111;margin-bottom:16px;">Full screen mode is required for the exam.<br>Please click the button below to continue in fullscreen.</p>';
+
+        var btn = document.createElement('button');
+        btn.textContent = 'Enter Fullscreen';
+        btn.style.padding = '12px 20px';
+        btn.style.border = 'none';
+        btn.style.borderRadius = '8px';
+        btn.style.background = '#0066ff';
+        btn.style.color = '#fff';
+        btn.style.fontSize = '1rem';
+        btn.style.cursor = 'pointer';
+
+        btn.addEventListener('click', function() {
+            requestFullscreenMode();
+            setTimeout(function() {
+                if (document.fullscreenElement) {
+                    overlay.remove();
+                }
+            }, 250);
+        });
+
+        box.appendChild(btn);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+    }
+
+    // Prevent window switching and focus loss
+    function preventWindowSwitching() {
+        // Prevent Alt+Tab and other window switching
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey && e.keyCode === 9) { // Alt+Tab
+                e.preventDefault();
+                e.stopPropagation();
+                recordFocusLossToServer('ALT_TAB_DETECTED');
+                showFocusWarning('⚠️ Alt+Tab detected! This is logged.');
+                return false;
+            }
+
+            if (e.key === 'F11') {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+
+            if (e.key === 'Escape' && document.fullscreenElement) {
+                e.preventDefault();
+                e.stopPropagation();
+                recordFullscreenExit();
+                showFocusWarning('⚠️ Escape key pressed while in fullscreen! This is logged.');
+                return false;
+            }
+
+            // Prevent Ctrl+Tab (tab switching within browser)
+            if (e.ctrlKey && e.keyCode === 9) {
+                e.preventDefault();
+                e.stopPropagation();
+                recordFocusLossToServer('CTRL_TAB_DETECTED');
+                showFocusWarning('⚠️ Ctrl+Tab detected! This is logged.');
+                return false;
+            }
+
+            // Prevent Windows key combinations
+            if (e.key === 'Meta' || e.keyCode === 91 || e.keyCode === 92) {
+                e.preventDefault();
+                e.stopPropagation();
+                recordFocusLossToServer('WINDOWS_KEY_DETECTED');
+                showFocusWarning('⚠️ Windows key detected! This is logged.');
+                return false;
+            }
+        });
+
+        // Prevent context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showFocusWarning('Right-click is disabled during the exam.');
+        });
+
+        // Prevent copy/paste/cut
+        document.addEventListener('copy', function(e) { e.preventDefault(); });
+        document.addEventListener('cut', function(e) { e.preventDefault(); });
+        document.addEventListener('paste', function(e) { e.preventDefault(); });
+
+        // Prevent drag and drop
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+        document.addEventListener('drop', function(e) { e.preventDefault(); });
+
+        // Prevent selection except when interacting with form controls / labels
+        document.addEventListener('selectstart', function(e) {
+            var target = e.target;
+            if (target.closest('input, textarea, select, button, label')) {
+                return; // normal option selection interaction should not trigger warning
+            }
+            e.preventDefault();
+            showFocusWarning('Text selection is disabled during the exam.');
+        });
+    }
+
+    // Monitor visibility changes more aggressively
+    function monitorVisibility() {
+        var visibilityTimer;
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                clearTimeout(visibilityTimer);
+                visibilityTimer = setTimeout(function() {
+                    if (document.hidden) {
+                        recordFocusLossToServer('VISIBILITY');
+                        showFocusWarning('⚠️ Tab switched away! This is logged.');
+                        // Try to bring window back to focus
+                        window.focus();
+                    }
+                }, 100); // Small delay to avoid false positives
+            }
+        });
+
+        // Monitor window blur
+        window.addEventListener('blur', function() {
+            setTimeout(function() {
+                if (document.activeElement !== document.body) {
+                    recordFocusLossToServer('WINDOW_BLUR');
+                    showFocusWarning('⚠️ Window lost focus! This is logged.');
+                }
+            }, 100);
+        });
+
+        // Monitor fullscreen changes
+        document.addEventListener('fullscreenchange', function() {
+            if (document.fullscreenElement) {
+                hasFullscreen = true;
+            } else if (hasFullscreen && fullscreenEnforced) {
+                recordFullscreenExit();
+                showFocusWarning('⚠️ Fullscreen exited! This is logged. Returning to fullscreen...');
+                setTimeout(enforceFullscreen, 500);
+            }
+        });
+    }
+
+    // Initialize all protections
     window.addEventListener('load', function() {
+        // Start fullscreen enforcement
+        setTimeout(function() {
+            requestFullscreenMode();
+            setTimeout(enforceFullscreen, 2000); // Start enforcing after initial attempt
+        }, 500);
+
+        // Initialize all protections
+        preventWindowSwitching();
+        monitorVisibility();
+
+        // Load current focus status
         fetch('/api/v1/exams/' + examId + '/focus-status/', {
             credentials: 'same-origin'
         })
         .then(function(response) { return response.json(); })
         .then(function(data) {
-            console.log('Current focus status:', data);
             if (data.exceeded) {
-                showFocusWarning('⚠️ You have already exceeded the maximum focus losses limit!');
                 focusDetectionEnabled = false;
+                showFocusWarning('⚠️ You have exceeded allowable focus losses.');
             }
         })
-        .catch(function(error) {
-            console.error('Error loading focus status:', error);
+        .catch(function(err) {
+            console.error('Error loading focus status:', err);
         });
+
+        // Periodic fullscreen check
+        setInterval(function() {
+            if (!document.fullscreenElement && fullscreenEnforced) {
+                enforceFullscreen();
+            }
+        }, 5000); // Check every 5 seconds
+
+        // Fallback prompt if fullscreen request did not succeed immediately
+        setTimeout(function() {
+            if (!document.fullscreenElement && fullscreenEnforced) {
+                showFullscreenFallbackPrompt();
+            }
+        }, 1200);
+    });
+
+    // Prevent page unload without submission
+    window.addEventListener('beforeunload', function(e) {
+        if (!document.querySelector('form').submitted) {
+            e.preventDefault();
+            e.returnValue = 'Are you sure you want to leave? Your exam progress will be lost!';
+            return e.returnValue;
+        }
     });
 </script>
 

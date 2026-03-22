@@ -238,6 +238,36 @@ class DeviceFingerprinting(MiddlewareMixin):
         
         fingerprint_str = '|'.join(components)
         fingerprint = hashlib.sha256(fingerprint_str.encode()).hexdigest()
+        return fingerprint
+
+
+class SingleSessionMiddleware(MiddlewareMixin):
+    """Force only one active session per user at any time."""
+
+    def process_request(self, request):
+        if request.user.is_authenticated:
+            from django.contrib.sessions.models import Session
+            from core.models import ActiveUserSession
+
+            current_key = request.session.session_key
+            try:
+                active_session = ActiveUserSession.objects.get(user=request.user)
+                if active_session.session_key != current_key:
+                    # Invalidate old session
+                    Session.objects.filter(session_key=active_session.session_key).delete()
+                    # Force logout the old session by replacing it
+                    active_session.session_key = current_key
+                    active_session.last_activity = timezone.now()
+                    active_session.save()
+            except ActiveUserSession.DoesNotExist:
+                if current_key:
+                    ActiveUserSession.objects.create(
+                        user=request.user,
+                        session_key=current_key
+                    )
+
+        return None
+
         
         return fingerprint
 

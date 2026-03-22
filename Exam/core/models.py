@@ -18,6 +18,17 @@ class IPWhitelist(models.Model):
     def __str__(self):
         return f"{self.ip_address} - {self.description}"
 
+
+class ActiveUserSession(models.Model):
+    """Maintain one active session among all devices for each user."""
+
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='active_session')
+    session_key = models.CharField(max_length=255, unique=True)
+    last_activity = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Active session for {self.user.username}: {self.session_key}"
+
 class LoginAudit(models.Model):
     """Audit log for login attempts."""
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
