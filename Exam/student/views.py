@@ -193,6 +193,7 @@ class Register(View):
 class LoginView(View):
 	def get(self,request):
 		return render(request,'student/login.html')
+	
 	def post(self,request):
 		username = request.POST['username']
 		password = request.POST['password']
@@ -209,38 +210,46 @@ class LoginView(View):
 			user = auth.authenticate(username=username,password=password)
 			if user:
 				if user.is_active:
-					auth.login(request,user)
-					# Single session enforcement
-					from django.contrib.sessions.models import Session
-					from core.models import ActiveUserSession
-					current_session_key = request.session.session_key
-					if not current_session_key:
-						request.session.create()
-						current_session_key = request.session.session_key
-					ActiveUserSession.objects.update_or_create(
+					# NEW 2FA FLOW: Instead of directly logging in,
+					# redirect to OTP verification page
+					from core.two_factor_auth import TwoFactorAuth
+					from django.http import QueryDict
+					
+					# Verify user has an email configured
+					if not user.email:
+						messages.error(request, "Your account does not have an email address configured. Please contact administrator to update your profile email.")
+						return render(request, 'student/login.html')
+					
+					ip_address = self.get_client_ip(request)
+					user_agent = request.META.get('HTTP_USER_AGENT', '')
+					
+					# Create OTP session
+					session_result = TwoFactorAuth.create_otp_session(
+						user_email=user.email,
 						user=user,
-						defaults={'session_key': current_session_key}
-					)
-
-					email = user.email
-
-					email_subject = 'You Logged into your Portal account'
-					email_body = "If you think someone else logged in. Please contact support or reset your password.\n\nYou are receving this message because you have enabled login email notifications in portal settings. If you don't want to recieve such emails in future please turn the login email notifications off in settings."
-					fromEmail = settings.DEFAULT_FROM_EMAIL
-					email_msg = EmailMessage(
-						email_subject,
-						email_body,
-						fromEmail,
-						[email],
+						ip_address=ip_address,
+						user_agent=user_agent,
 					)
 					
-					student_pref = StudentPreferenceModel.objects.filter(user=user).first()
-					if student_pref and not student_pref.sendEmailOnLogin:
-						pass
-					else:
-						EmailThread(email_msg).start()
-
-					return redirect('index')
+					if not session_result['success']:
+						messages.error(request, "Failed to initiate 2FA. Please try again.")
+						return render(request, 'student/login.html')
+					
+					# Send OTP email
+					email_result = TwoFactorAuth.send_email_otp(
+						session_id=session_result['session_id'],
+						user_email=user.email,
+						user_name=user.get_full_name() or user.username,
+					)
+					
+					if not email_result['success']:
+						messages.error(request, "Failed to send OTP. Please try again.")
+						return render(request, 'student/login.html')
+					
+					# Redirect to OTP verification page
+					import urllib.parse
+					otp_url = f"/auth/otp/?session_id={session_result['session_id']}&email={urllib.parse.quote(user.email)}"
+					return redirect(otp_url)
 				else:
 					messages.error(request,"Account is not active")
 					return render(request,'student/login.html')
@@ -248,6 +257,14 @@ class LoginView(View):
 				messages.error(request,"Invalid Credentials")
 				return render(request,'student/login.html')
 		return render(request,'student/login.html')
+	
+	@staticmethod
+	def get_client_ip(request):
+		"""Extract client IP address from request."""
+		x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+		if x_forwarded_for:
+			return x_forwarded_for.split(',')[0].strip()
+		return request.META.get('REMOTE_ADDR', 'Unknown')
 
 class LogoutView(View):
     def get(self, request):

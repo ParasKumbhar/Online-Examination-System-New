@@ -23,6 +23,7 @@ urlpatterns = [
     path('faculty/',include('faculty.urls')),
     path('student-pref/',include('studentPreferences.urls')),
     path('exams/',include('questions.urls')),
+    path('auth/otp/', views.otp_verification, name='otp-verification'),
     path('',views.index,name = "homepage")
 ]
 

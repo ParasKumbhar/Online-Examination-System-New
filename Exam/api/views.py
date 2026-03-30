@@ -8,7 +8,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.permissions import AllowAny
 from django.contrib.auth.models import User
+from django.contrib import auth
 from django.db.models import Q, Avg, Max, Min, Count
 from django.core.cache import cache
 from django.core.mail import send_mail
@@ -459,107 +461,296 @@ def questions_create(request):
 # ==================== AUTHENTICATION & 2FA ENDPOINTS ====================
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def api_login(request):
     """
-    JWT Login with optional 2FA.
+    Step 1: Validate credentials and initiate 2FA.
     POST /api/v1/auth/login/
-    Returns JWT tokens on success.
-    Triggers 2FA on suspicious login.
+    
+    Request:
+    {
+        "username": "user@example.com or username",
+        "password": "password"
+    }
+    
+    Response (Success):
+    {
+        "requires_2fa": true,
+        "session_id": "unique-session-id",
+        "message": "Credentials verified. OTP sent to your email.",
+        "email": "user@example.com"
+    }
+    
+    CRITICAL: User MUST verify OTP before accessing dashboard.
     """
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.validated_data['user']
+        ip_address = get_client_ip(request)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
         
-        # Check audit ID from middleware
-        audit_id = getattr(request, '_login_audit_id', None)
-        if audit_id:
-            audit = LoginAudit.objects.get(id=audit_id)
-            audit.success = True
-            audit.user = user
-            audit.save()
+        # Create audit log for successful credential verification
+        audit = LoginAudit.objects.create(
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            device_fingerprint=request.data.get('device_fingerprint', ''),
+            success=True,
+            suspicious=False,
+        )
         
-        # Check if 2FA required (suspicious login)
-        if TwoFactorAuth.is_2fa_required(user):
-            TwoFactorAuth.clear_2fa_requirement(user)
+        # Create OTP session (Email OTP ONLY)
+        session_result = TwoFactorAuth.create_otp_session(
+            user_email=user.email,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            device_fingerprint=request.data.get('device_fingerprint', ''),
+        )
+        
+        if not session_result['success']:
             return Response({
-                'message': 'Login successful, 2FA required',
-                'requires_2fa': True,
-                'username': user.username,
-                'email': user.email
-            }, status=status.HTTP_202_ACCEPTED)
+                'error': session_result['message'],
+                'success': False,
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        # Generate JWT
-        refresh = JWTSerializer.get_token(user)
+        session_id = session_result['session_id']
+        
+        # Send OTP email
+        email_result = TwoFactorAuth.send_email_otp(
+            session_id=session_id,
+            user_email=user.email,
+            user_name=user.get_full_name() or user.username,
+        )
+        
+        if not email_result['success']:
+            return Response({
+                'error': 'Failed to send OTP email. Please try again.',
+                'success': False,
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        logger.info(f'OTP session created for user {user.username} from IP {ip_address}')
+        
         return Response({
-            'message': 'Login successful',
-            'access': str(refresh.access_token),
-            'refresh': str(refresh)
-        }, status=status.HTTP_200_OK)
+            'requires_2fa': True,
+            'session_id': session_id,
+            'message': 'Credentials verified. OTP sent to your email.',
+            'email': user.email,
+            'expires_in_minutes': session_result.get('expires_in_minutes', 3),
+            'otp': session_result.get('otp'),  # Only for DEBUG mode
+        }, status=status.HTTP_202_ACCEPTED)
+    
+    # Log failed attempt
+    ip_address = get_client_ip(request)
+    AuditLog.objects.create(
+        user=None,
+        action='LOGIN_FAILED',
+        ip_address=ip_address,
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        success=False,
+        details={'error': 'Invalid credentials'},
+    )
     
     return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def otp_request(request):
     """
-    Request OTP via email.
+    Step 2a: Request Resend OTP.
     POST /api/v1/auth/otp/request/
+    
+    Allows user to resend OTP if not received, with rate limiting.
+    
+    Request:
+    {
+        "session_id": "unique-session-id"
+    }
+    
+    Response (Success):
+    {
+        "success": true,
+        "message": "OTP resent to your email",
+        "expires_in_minutes": 3,
+        "otp": "123456" (DEBUG only)
+    }
+    
+    Rate Limiting: 1 resend per 30 seconds
     """
-    serializer = OTPRequestSerializer(data=request.data)
-    if serializer.is_valid():
-        email = serializer.validated_data['email']
-        result = OTPGenerator.send_email_otp(email)
+    
+    session_id = request.data.get('session_id')
+    if not session_id:
+        return Response({
+            'error': 'session_id required',
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        from core.models import OTPSession
         
+        session = OTPSession.objects.get(session_id=session_id, is_active=True)
+        user_email = session.user_email
+        
+        # Resend OTP with rate limiting
+        result = TwoFactorAuth.resend_otp(session_id, user_email)
+        
+        # Audit log
         AuditLog.objects.create(
-            user=None,
-            action='OTP_REQUEST',
+            user=session.user,
+            action='OTP_RESEND',
             ip_address=get_client_ip(request),
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
-            details={'email': email}
+            success=result['success'],
+            details={'session_id': session_id, 'resend_count': session.resend_count + 1}
         )
         
         if result['success']:
             return Response({
+                'success': True,
                 'message': result['message'],
-                'email_sent': True
-            })
-        return Response({'error': result['message']}, status=status.HTTP_400_BAD_REQUEST)
+                'expires_in_minutes': result.get('expires_in_minutes', 3),
+                'otp': result.get('otp'),  # DEBUG only
+                'resend_count': result.get('resend_count', 1)
+            }, status=status.HTTP_200_OK)
+        
+        # Rate limit or other error
+        return Response({
+            'success': False,
+            'error': result['message'],
+            'seconds_remaining': result.get('seconds_remaining'),
+        }, status=status.HTTP_429_TOO_MANY_REQUESTS if 'wait' in result['message'].lower() else status.HTTP_400_BAD_REQUEST)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except OTPSession.DoesNotExist:
+        return Response({
+            'error': 'Session not found. Please login again.',
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f'Error in otp_request: {str(e)}')
+        return Response({
+            'error': 'OTP resend failed',
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def otp_verify(request):
     """
-    Verify OTP and get JWT tokens.
+    Step 2b: Verify OTP and Issue JWT Tokens.
     POST /api/v1/auth/otp/verify/
-    """
-    serializer = OTPVerifySerializer(data=request.data)
-    if serializer.is_valid():
-        email = serializer.validated_data['email']
-        otp = serializer.validated_data['otp']
-        
-        result = OTPGenerator.verify_otp(email, otp)
-        if result['valid']:
-            # Get user by email
-            user = User.objects.get(email=email, is_active=True)
-            
-            # Generate JWT
-            refresh = JWTSerializer.get_token(user)
-            return Response({
-                'message': '2FA verified, login successful',
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email
-                }
-            })
-        
-        return Response({'error': result['message']}, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    CRITICAL: This is the ONLY way to get JWT tokens after login.
+    Dashboard access is impossible without this step.
+    
+    Request:
+    {
+        "session_id": "unique-session-id",
+        "otp": "123456"
+    }
+    
+    Response (Success):
+    {
+        "success": true,
+        "message": "OTP verified successfully",
+        "access": "jwt-access-token",
+        "refresh": "jwt-refresh-token",
+        "user": {
+            "id": 1,
+            "username": "student1",
+            "email": "student@example.com"
+        }
+    }
+    
+    Response (Invalid):
+    {
+        "error": "Invalid OTP. 4 attempts remaining.",
+        "attempts_remaining": 4
+    }
+    
+    Security Features:
+    - Validates session exists and is active
+    - Checks OTP expiry
+    - Enforces retry limit (5 attempts max)
+    - Rejects reused/expired OTPs
+    - Clears OTP from cache after verification
+    - Links OTP verification to specific login attempt
+    """
+    
+    session_id = request.data.get('session_id')
+    otp = request.data.get('otp')
+    
+    if not session_id or not otp:
+        return Response({
+            'error': 'session_id and otp required',
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        from core.models import OTPSession
+        
+        # Verify OTP
+        ip_address = get_client_ip(request)
+        result = TwoFactorAuth.verify_otp(session_id, otp, ip_address)
+        
+        if not result['valid']:
+            # Log failed attempt
+            AuditLog.objects.create(
+                user=None,
+                action='OTP_VERIFY_FAILED',
+                ip_address=ip_address,
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                success=False,
+                details={
+                    'session_id': session_id,
+                    'reason': result.get('reason', 'UNKNOWN'),
+                    'attempts_remaining': result.get('attempts_remaining'),
+                }
+            )
+            
+            return Response({
+                'error': result['message'],
+                'reason': result.get('reason'),
+                'attempts_remaining': result.get('attempts_remaining'),
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # OTP verified successfully
+        user = result['user']
+        session = result['session']
+        
+        # Log successful verification
+        AuditLog.objects.create(
+            user=user,
+            action='OTP_VERIFIED',
+            ip_address=ip_address,
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            success=True,
+            details={'session_id': session_id}
+        )
+        
+        # Establish Django session (allows browser navigation without JWT headers)
+        auth.login(request, user)
+        
+        # Generate JWT tokens (ONLY after OTP verification)
+        refresh = JWTSerializer.get_token(user)
+        
+        logger.info(f'2FA successful for user {user.username} from IP {ip_address}')
+        
+        return Response({
+            'success': True,
+            'message': 'OTP verified successfully. Logging in...',
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'groups': [g.name for g in user.groups.all()],
+            }
+        }, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f'Error verifying OTP: {str(e)}', exc_info=True)
+        return Response({
+            'error': 'OTP verification failed',
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

@@ -93,6 +93,8 @@ MIDDLEWARE = [
     'core.middleware.RateLimitMiddleware',
     'core.middleware.IPTrackingMiddleware',
     'core.middleware.DeviceFingerprinting',
+    'core.middleware.SuspiciousLoginMiddleware',
+    'core.middleware.TwoFactorAuthenticationMiddleware',
     'core.middleware.AuditLoggingMiddleware',
 ]
 

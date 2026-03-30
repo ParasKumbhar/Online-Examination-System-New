@@ -1,0 +1,476 @@
+{% extends 'base_auth.html' %}
+{% load static %}
+
+{% block title %}Verify OTP - Two-Factor Authentication{% endblock %}
+
+{% block extra_css %}
+<style>
+    .otp-input {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+        text-align: center;
+        letter-spacing: 0.5rem;
+    }
+    
+    .otp-input::-webkit-outer-spin-button,
+    .otp-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    .otp-input[type=number] {
+        -moz-appearance: textfield;
+        appearance: none;
+    }
+    
+    .timer-text {
+        font-variant-numeric: tabular-nums;
+    }
+    
+    .input-group {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+    
+    .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .shake-animation {
+        animation: shake 0.5s;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="p-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <div class="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 mx-auto mb-4">
+            <i class="fa-solid fa-shield-check text-primary text-xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">Verify Your Identity</h1>
+        <p class="text-slate-600 text-sm">
+            We've sent a 6-digit code to<br>
+            <span class="font-medium text-slate-700">{{ email }}</span>
+        </p>
+    </div>
+
+    <!-- Main Form -->
+    <form id="otpForm" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" id="sessionId" value="{{ session_id }}">
+
+        <!-- OTP Input Container -->
+        <div class="space-y-4">
+            <label class="block text-sm font-medium text-slate-700">
+                Enter the 6-digit code
+            </label>
+
+            <!-- OTP Input Fields -->
+            <div class="input-group">
+                <input type="number" class="otp-input border-2 border-slate-300 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all" id="otp1" maxlength="1" placeholder="0" inputmode="numeric" autofocus>
+                <input type="number" class="otp-input border-2 border-slate-300 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all" id="otp2" maxlength="1" placeholder="0" inputmode="numeric">
+                <input type="number" class="otp-input border-2 border-slate-300 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all" id="otp3" maxlength="1" placeholder="0" inputmode="numeric">
+                <input type="number" class="otp-input border-2 border-slate-300 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all" id="otp4" maxlength="1" placeholder="0" inputmode="numeric">
+                <input type="number" class="otp-input border-2 border-slate-300 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all" id="otp5" maxlength="1" placeholder="0" inputmode="numeric">
+                <input type="number" class="otp-input border-2 border-slate-300 rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all" id="otp6" maxlength="1" placeholder="0" inputmode="numeric">
+            </div>
+
+            <!-- Hidden field to store complete OTP -->
+            <input type="hidden" id="otpComplete" name="otp" value="">
+        </div>
+
+        <!-- Inline Error Messages -->
+        <div id="errorContainer" class="hidden">
+            <div id="errorMessage" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium flex items-center gap-3">
+                <i class="fa-solid fa-circle-exclamation flex-shrink-0"></i>
+                <span id="errorText"></span>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successContainer" class="hidden fade-in">
+            <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium flex items-center gap-3">
+                <i class="fa-solid fa-check-circle flex-shrink-0"></i>
+                <span>OTP verified successfully! Logging you in...</span>
+            </div>
+        </div>
+
+        <!-- Timer and Resend -->
+        <div class="pt-2 text-center space-y-3">
+            <!-- Countdown Timer -->
+            <div class="flex items-center justify-center gap-2">
+                <i class="fa-solid fa-hourglass-end text-slate-400 text-sm"></i>
+                <span class="text-sm text-slate-600">
+                    Code expires in <span id="timer" class="font-semibold timer-text">3:00</span>
+                </span>
+            </div>
+
+            <!-- Resend OTP Button -->
+            <div>
+                <button type="button" id="resendBtn" class="text-sm text-primary hover:text-indigo-700 font-medium transition-colors disabled:text-slate-400 disabled:cursor-not-allowed" disabled>
+                    <i class="fa-solid fa-redo text-xs mr-1"></i>
+                    <span id="resendText">Resend code</span>
+                </button>
+                <span id="resendTimer" class="text-xs text-slate-400 ml-2 hidden">in <span class="timer-text">30</span>s</span>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn" class="w-full py-3 px-4 bg-primary hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-md transition duration-200 flex items-center justify-center gap-2">
+            <span id="submitText">Verify Code</span>
+            <i id="submitIcon" class="fa-solid fa-arrow-right"></i>
+            <i id="submitSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+        </button>
+
+        <!-- Security Notice -->
+        <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-xs">
+            <i class="fa-solid fa-shield-check mr-2"></i>
+            <strong>Security:</strong> Never share your OTP. This code is single-use only and expires in 3 minutes.
+        </div>
+    </form>
+
+    <!-- Back to Login Link -->
+    <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+        <a href="{% url 'login' %}" class="text-sm text-slate-600 hover:text-primary transition-colors">
+            <i class="fa-solid fa-arrow-left mr-1"></i>
+            Back to Login
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const otpInputs = document.querySelectorAll('.otp-input');
+    const otpComplete = document.getElementById('otpComplete');
+    const otpForm = document.getElementById('otpForm');
+    const sessionId = document.getElementById('sessionId').value;
+    const errorContainer = document.getElementById('errorContainer');
+    const errorText = document.getElementById('errorText');
+    const successContainer = document.getElementById('successContainer');
+    const submitBtn = document.getElementById('submitBtn');
+    const resendBtn = document.getElementById('resendBtn');
+    const timerElement = document.getElementById('timer');
+    const resendTimerElement = document.getElementById('resendTimer');
+    const submitText = document.getElementById('submitText');
+    const submitIcon = document.getElementById('submitIcon');
+    const submitSpinner = document.getElementById('submitSpinner');
+
+    const OTP_EXPIRY_MINUTES = parseInt("{{ expires_in_minutes|default:3 }}") || 3;
+    const RESEND_INTERVAL = 30;
+    
+    let expiryTime = new Date().getTime() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+    let resendAllowedAt = new Date().getTime() + (RESEND_INTERVAL * 1000);
+    let isSubmitting = false;
+
+    // ==================== Auto-Tab OTP Input ====================
+    otpInputs.forEach((input, index) => {
+        input.addEventListener('input', function(e) {
+            // Remove non-digit characters
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Auto-tab to next field
+            if (this.value.length === 1 && index < otpInputs.length - 1) {
+                otpInputs[index + 1].focus();
+            }
+            
+            // Update complete OTP
+            updateOTPComplete();
+            
+            // Clear error on new input
+            clearError();
+        });
+
+        // Allow backspace for previous field
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                otpInputs[index - 1].focus();
+            }
+        });
+
+        // Prevent paste as individual characters
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text');
+            const digits = pastedData.replace(/[^0-9]/g, '').slice(0, 6);
+            
+            digits.split('').forEach((digit, i) => {
+                if (i < otpInputs.length) {
+                    otpInputs[i].value = digit;
+                }
+            });
+            
+            updateOTPComplete();
+            otpInputs[Math.min(digits.length, otpInputs.length - 1)].focus();
+        });
+    });
+
+    function updateOTPComplete() {
+        const otp = Array.from(otpInputs).map(input => input.value).join('');
+        otpComplete.value = otp;
+        
+        // Enable submit only if all 6 digits are entered
+        submitBtn.disabled = otp.length !== 6;
+    }
+
+    // ==================== Countdown Timer ====================
+    function startExpiryTimer() {
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const timeRemaining = expiryTime - now;
+
+            if (timeRemaining <= 0) {
+                clearInterval(interval);
+                showError('OTP has expired. Please request a new one.');
+                otpInputs.forEach(input => input.disabled = true);
+                submitBtn.disabled = true;
+                resendBtn.disabled = true;
+                timerElement.textContent = '0:00';
+                return;
+            }
+
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Show warning at 30 seconds
+            if (timeRemaining < 30000 && !timerElement.classList.contains('text-orange-600')) {
+                timerElement.classList.add('text-orange-600', 'font-bold');
+            }
+        }, 100);
+    }
+
+    function startResendTimer() {
+        resendBtn.disabled = true;
+        resendTimerElement.classList.remove('hidden');
+
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const timeRemaining = resendAllowedAt - now;
+
+            if (timeRemaining <= 0) {
+                clearInterval(interval);
+                resendBtn.disabled = false;
+                resendTimerElement.classList.add('hidden');
+                return;
+            }
+
+            const seconds = Math.ceil(timeRemaining / 1000);
+            resendTimerElement.querySelector('.timer-text').textContent = seconds;
+        }, 100);
+    }
+
+    // ==================== Error/Success Messages ====================
+    function showError(message) {
+        errorText.textContent = message;
+        errorContainer.classList.remove('hidden');
+        errorContainer.classList.add('shake-animation');
+        setTimeout(() => errorContainer.classList.remove('shake-animation'), 500);
+    }
+
+    function clearError() {
+        errorContainer.classList.add('hidden');
+    }
+
+    function showSuccess() {
+        successContainer.classList.remove('hidden');
+        submitBtn.disabled = true;
+        resendBtn.disabled = true;
+        otpInputs.forEach(input => input.disabled = true);
+    }
+
+    // ==================== Form Submission ====================
+    otpForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const otp = otpComplete.value;
+
+        if (!otp || otp.length !== 6) {
+            showError('Please enter a valid 6-digit code.');
+            return;
+        }
+
+        if (isSubmitting) return;
+        isSubmitting = true;
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitText.textContent = 'Verifying...';
+        submitIcon.classList.add('hidden');
+        submitSpinner.classList.remove('hidden');
+
+        try {
+            const response = await fetch('{% url "api:otp-verify" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                credentials: 'include',  // Include cookies for session authentication
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    otp: otp
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Success!
+                showSuccess();
+                
+                // Store tokens
+                localStorage.setItem('access_token', data.access);
+                localStorage.setItem('refresh_token', data.refresh);
+                localStorage.setItem('user', JSON.stringify(data.user));
+
+                // Redirect to dashboard
+                setTimeout(() => {
+                    const group = data.user.groups[0]; // Get first group
+                    let dashboardUrl = '/student/';
+                    
+                    if (group === 'Professor' || group === 'Faculty') {
+                        dashboardUrl = '/faculty/';
+                    }
+                    
+                    window.location.href = dashboardUrl;
+                }, 1500);
+
+                return;
+            } else {
+                // Error
+                const message = data.error || 'Verification failed. Please try again.';
+                const attemptsRemaining = data.attempts_remaining;
+                
+                if (attemptsRemaining !== undefined) {
+                    showError(`${message} (${attemptsRemaining} ${attemptsRemaining === 1 ? 'attempt' : 'attempts'} remaining)`);
+                } else {
+                    showError(message);
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Network error. Please check your connection and try again.');
+        } finally {
+            isSubmitting = false;
+            submitBtn.disabled = otpComplete.value.length !== 6;
+            submitText.textContent = 'Verify Code';
+            submitIcon.classList.remove('hidden');
+            submitSpinner.classList.add('hidden');
+        }
+    });
+
+    // ==================== Resend OTP ====================
+    resendBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+
+        if (isSubmitting) return;
+        isSubmitting = true;
+
+        // Show loading state
+        resendBtn.disabled = true;
+        const originalText = resendBtn.innerHTML;
+        resendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Sending...';
+
+        try {
+            const response = await fetch('{% url "api:otp-request" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Reset inputs
+                otpInputs.forEach(input => {
+                    input.value = '';
+                    input.disabled = false;
+                });
+                otpComplete.value = '';
+                submitBtn.disabled = true;
+
+                // Clear errors
+                clearError();
+
+                // Update expiry time
+                expiryTime = new Date().getTime() + (OTP_EXPIRY_MINUTES * 60 * 1000);
+                timerElement.classList.remove('text-orange-600', 'font-bold');
+
+                // Focus first input
+                otpInputs[0].focus();
+
+                // Start resend timer
+                resendAllowedAt = new Date().getTime() + (RESEND_INTERVAL * 1000);
+                startResendTimer();
+
+                // Show success message
+                const message = `Code resent successfully (Resend #${data.resend_count})`;
+                const successDiv = document.createElement('div');
+                successDiv.className = 'p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm font-medium flex items-center gap-2 fade-in';
+                successDiv.innerHTML = `<i class="fa-solid fa-check-circle"></i><span>${message}</span>`;
+                
+                const container = errorContainer.parentElement;
+                container.insertBefore(successDiv, errorContainer.nextSibling);
+                
+                setTimeout(() => successDiv.remove(), 3000);
+            } else {
+                const message = data.error || 'Failed to resend code.';
+                if (data.seconds_remaining) {
+                    showError(`${message} Please wait ${data.seconds_remaining}s before trying again.`);
+                } else {
+                    showError(message);
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Network error. Please check your connection and try again.');
+        } finally {
+            isSubmitting = false;
+            resendBtn.innerHTML = originalText;
+        }
+    });
+
+    // ==================== Initialize ====================
+    updateOTPComplete();
+    startExpiryTimer();
+    startResendTimer();
+
+    // Prevent form submission on Enter (auto-submit when 6 digits entered)
+    otpForm.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && otpComplete.value.length === 6 && !isSubmitting) {
+            otpForm.dispatchEvent(new Event('submit'));
+        }
+    });
+});
+</script>
+{% endblock %}
