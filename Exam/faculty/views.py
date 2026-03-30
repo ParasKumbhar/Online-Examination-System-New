@@ -102,20 +102,45 @@ class LoginView(View):
 				user_ch = User.objects.get(username=username)
 				has_grp = has_group(user_ch,"Professor")
 			if user and user.is_active and exis and has_grp:
-				auth.login(request,user)
-				# Single session enforcement
-				from django.contrib.sessions.models import Session
-				from core.models import ActiveUserSession
-				current_session_key = request.session.session_key
-				if not current_session_key:
-					request.session.create()
-					current_session_key = request.session.session_key
-				ActiveUserSession.objects.update_or_create(
+				# NEW 2FA FLOW: Instead of directly logging in,
+				# redirect to OTP verification page
+				from core.two_factor_auth import TwoFactorAuth
+				
+				# Verify user has an email configured
+				if not user.email:
+					messages.error(request, "Your account does not have an email address configured. Please contact administrator to update your profile email.")
+					return render(request, 'faculty/login.html')
+				
+				ip_address = self.get_client_ip(request)
+				user_agent = request.META.get('HTTP_USER_AGENT', '')
+				
+				# Create OTP session
+				session_result = TwoFactorAuth.create_otp_session(
+					user_email=user.email,
 					user=user,
-					defaults={'session_key': current_session_key}
+					ip_address=ip_address,
+					user_agent=user_agent,
 				)
-				messages.success(request,"Welcome, "+ user.username + ". You are now logged in.")
-				return redirect('faculty-index')
+				
+				if not session_result['success']:
+					messages.error(request, "Failed to initiate 2FA. Please try again.")
+					return render(request, 'faculty/login.html')
+				
+				# Send OTP email
+				email_result = TwoFactorAuth.send_email_otp(
+					session_id=session_result['session_id'],
+					user_email=user.email,
+					user_name=user.get_full_name() or user.username,
+				)
+				
+				if not email_result['success']:
+					messages.error(request, "Failed to send OTP. Please try again.")
+					return render(request, 'faculty/login.html')
+				
+				# Redirect to OTP verification page
+				import urllib.parse
+				otp_url = f"/auth/otp/?session_id={session_result['session_id']}&email={urllib.parse.quote(user.email)}"
+				return redirect(otp_url)
 			elif not has_grp and exis:
 				messages.error(request,'You dont have permssions to login as faculty. If You think this is a mistake please contact admin')	
 				return render(request,'faculty/login.html')
@@ -128,6 +153,16 @@ class LoginView(View):
 
 		messages.error(request,'Please fill all fields')
 		return render(request,'faculty/login.html')
+
+	@staticmethod
+	def get_client_ip(request):
+		"""Extract client IP address from request."""
+		x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+		if x_forwarded_for:
+			ip = x_forwarded_for.split(',')[0]
+		else:
+			ip = request.META.get('REMOTE_ADDR')
+		return ip
 
 class LogoutView(View):
     def get(self, request):
