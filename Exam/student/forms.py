@@ -2,6 +2,7 @@ from django import forms
 from .models import StudentInfo
 from django.contrib.auth.models import User
 from django.core.validators import MinLengthValidator, RegexValidator
+from core.email_validators import validate_email_complete
 
 class StudentForm(forms.ModelForm):
     password = forms.CharField(
@@ -37,6 +38,11 @@ class StudentForm(forms.ModelForm):
             'email' : forms.EmailInput(attrs = {'id':'id_email','tabindex': '2','class':'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all'}),
             'username' : forms.TextInput(attrs = {'id':'id_username','tabindex': '1','class':'w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all'})
         }
+
+    def clean_email(self):
+        """Validate email format and check for duplicates using centralized validator."""
+        email = self.cleaned_data.get('email')
+        return validate_email_complete(email)
 
     def clean(self):
         cleaned_data = super().clean()
