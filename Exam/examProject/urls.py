@@ -24,6 +24,7 @@ urlpatterns = [
     path('student-pref/',include('studentPreferences.urls')),
     path('exams/',include('questions.urls')),
     path('auth/otp/', views.otp_verification, name='otp-verification'),
+    path('components/avatar-showcase/', views.avatar_showcase, name='avatar-showcase'),
     path('',views.index,name = "homepage")
 ]
 

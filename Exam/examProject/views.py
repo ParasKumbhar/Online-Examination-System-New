@@ -46,6 +46,16 @@ def otp_verification(request):
         'session_id': session_id,
         'email': email,
         'expires_in_minutes': 3,  # Default OTP expiry
+        'user': otp_session.user,  # Pass user object for avatar display
     }
     
     return render(request, 'auth/otp_verification.html', context)
+
+
+@require_http_methods(["GET"])
+def avatar_showcase(request):
+    """
+    Avatar Component Showcase
+    Displays all avatar sizes and use cases
+    """
+    return render(request, 'components_showcase.html')

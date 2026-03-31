@@ -1,0 +1,30 @@
+{% load avatar_tags %}
+<!-- Avatar Component - Displays profile image or letter avatar -->
+<div class="flex items-center gap-3">
+    <!-- Avatar Circle -->
+    <div class="relative inline-flex items-center justify-center rounded-full font-semibold text-white flex-shrink-0 {{ size_classes.wrapper }}" 
+         style="background-color: {{ color }};"
+         title="{{ display_name }}">
+        
+        {% if profile_pic %}
+            <!-- Profile Image -->
+            <img src="{{ profile_pic }}" 
+                 alt="{{ display_name }}" 
+                 class="rounded-full object-cover {{ size_classes.image }}"
+                 loading="lazy">
+        {% else %}
+            <!-- Letter Avatar (Fallback) -->
+            <span class="font-bold">{{ letter }}</span>
+        {% endif %}
+    </div>
+    
+    <!-- User Name (Optional) -->
+    {% if show_name %}
+    <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-gray-900 truncate">{{ display_name }}</p>
+        {% if user.email %}
+        <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>

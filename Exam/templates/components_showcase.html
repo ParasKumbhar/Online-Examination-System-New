@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load avatar_tags %}
+
+{% block title %}Avatar Component Showcase{% endblock %}
+{% block page_title %}Avatar Component Showcase{% endblock %}
+
+{% block extra_css %}
+<style>
+    .showcase-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .showcase-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    .example-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 0.375rem;
+    }
+    
+    .code-block {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        overflow-x: auto;
+        font-family: monospace;
+        font-size: 0.875rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="max-w-6xl mx-auto">
+    
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">Avatar Component Showcase</h1>
+        <p class="text-slate-600">Display student profile images or letter avatars with multiple size options</p>
+    </div>
+
+    <!-- Size Variations -->
+    <div class="showcase-card">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Size Variations</h2>
+        <div class="showcase-grid">
+            <div class="example-item">
+                <h3 class="text-sm font-semibold text-slate-600 mb-4">Small (sm)</h3>
+                {% user_avatar user size="sm" %}
+                <div class="code-block">{% user_avatar user size="sm" %}</div>
+            </div>
+            
+            <div class="example-item">
+                <h3 class="text-sm font-semibold text-slate-600 mb-4">Medium (md)</h3>
+                {% user_avatar user size="md" %}
+                <div class="code-block">{% user_avatar user size="md" %}</div>
+            </div>
+            
+            <div class="example-item">
+                <h3 class="text-sm font-semibold text-slate-600 mb-4">Large (lg)</h3>
+                {% user_avatar user size="lg" %}
+                <div class="code-block">{% user_avatar user size="lg" %}</div>
+            </div>
+            
+            <div class="example-item">
+                <h3 class="text-sm font-semibold text-slate-600 mb-4">Extra Large (xl)</h3>
+                {% user_avatar user size="xl" %}
+                <div class="code-block">{% user_avatar user size="xl" %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- With Name Display -->
+    <div class="showcase-card">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">With Name Display</h2>
+        <p class="text-slate-600 mb-4">Show user name and email next to avatar</p>
+        
+        <div class="space-y-4">
+            <div class="p-4 bg-slate-50 rounded-lg">
+                <h3 class="text-sm font-semibold text-slate-600 mb-3">Small with Name</h3>
+                {% user_avatar user size="sm" show_name=True %}
+                <div class="code-block">{% user_avatar user size="sm" show_name=True %}</div>
+            </div>
+            
+            <div class="p-4 bg-slate-50 rounded-lg">
+                <h3 class="text-sm font-semibold text-slate-600 mb-3">Medium with Name</h3>
+                {% user_avatar user size="md" show_name=True %}
+                <div class="code-block">{% user_avatar user size="md" show_name=True %}</div>
+            </div>
+            
+            <div class="p-4 bg-slate-50 rounded-lg">
+                <h3 class="text-sm font-semibold text-slate-600 mb-3">Large with Name</h3>
+                {% user_avatar user size="lg" show_name=True %}
+                <div class="code-block">{% user_avatar user size="lg" show_name=True %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="showcase-card">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Common Use Cases</h2>
+        <div class="space-y-6">
+            
+            <!-- Topbar Usage -->
+            <div>
+                <h3 class="text-lg font-semibold text-slate-700 mb-3">Topbar/Header</h3>
+                <p class="text-slate-600 mb-3">Compact avatar in the header for quick access</p>
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+                    <span class="font-medium text-slate-700">Header with Avatar:</span>
+                    {% user_avatar user size="sm" %}
+                </div>
+            </div>
+            
+            <!-- Sidebar Usage -->
+            <div>
+                <h3 class="text-lg font-semibold text-slate-700 mb-3">Sidebar Profile Section</h3>
+                <p class="text-slate-600 mb-3">Display current user in sidebar</p>
+                <div class="p-4 bg-slate-50 border-l-4 border-primary rounded-lg space-y-2">
+                    {% user_avatar user size="md" show_name=True %}
+                </div>
+            </div>
+            
+            <!-- Profile Page -->
+            <div>
+                <h3 class="text-lg font-semibold text-slate-700 mb-3">Profile Page Header</h3>
+                <p class="text-slate-600 mb-3">Large avatar on user's profile page</p>
+                <div class="p-8 bg-slate-50 border border-slate-200 rounded-lg text-center space-y-4">
+                    {% user_avatar user size="xl" %}
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">{{ user.get_full_name }}</h2>
+                        <p class="text-slate-600">{{ user.email }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Student List -->
+            <div>
+                <h3 class="text-lg font-semibold text-slate-700 mb-3">Student List/Table</h3>
+                <p class="text-slate-600 mb-3">Compact avatars in a list of students</p>
+                <div class="overflow-x-auto bg-white border border-slate-200 rounded-lg">
+                    <table class="w-full">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Student</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Email</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center gap-3">
+                                        {% user_avatar user size="sm" %}
+                                        <span class="font-medium text-slate-900">{{ user.get_full_name }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-slate-600">{{ user.email }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
+                                        <i class="fa-solid fa-circle-check"></i> Active
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Comment/Reply -->
+            <div>
+                <h3 class="text-lg font-semibold text-slate-700 mb-3">Comments/Discussions</h3>
+                <p class="text-slate-600 mb-3">Avatar next to comment text</p>
+                <div class="space-y-4">
+                    <div class="p-4 bg-white border border-slate-200 rounded-lg flex gap-4">
+                        {% user_avatar user size="sm" %}
+                        <div class="flex-1">
+                            <p class="font-semibold text-slate-900">{{ user.get_full_name }}</p>
+                            <p class="text-slate-600 text-sm">This is a sample comment or feedback message.</p>
+                            <p class="text-xs text-slate-500 mt-2">Posted a few moments ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Scheme Info -->
+    <div class="showcase-card">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Letter Avatar Colors</h2>
+        <p class="text-slate-600 mb-6">Colors are assigned based on the first letter of the user's name, following Google's color scheme:</p>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+                <div class="w-12 h-12 rounded-full bg-red-500 mx-auto mb-3 flex items-center justify-center text-white font-bold">A</div>
+                <p class="text-sm font-medium text-slate-700">Red: A, E, I, M, Q, U, Y</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+                <div class="w-12 h-12 rounded-full bg-blue-500 mx-auto mb-3 flex items-center justify-center text-white font-bold">B</div>
+                <p class="text-sm font-medium text-slate-700">Blue: B, G, K, O, S, W</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+                <div class="w-12 h-12 rounded-full bg-green-500 mx-auto mb-3 flex items-center justify-center text-white font-bold">C</div>
+                <p class="text-sm font-medium text-slate-700">Green: C, F, J, N, R, V, Z</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-lg">
+                <div class="w-12 h-12 rounded-full bg-yellow-500 mx-auto mb-3 flex items-center justify-center text-white font-bold">D</div>
+                <p class="text-sm font-medium text-slate-700">Orange: D, H, L, P, T, X</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integration Guide -->
+    <div class="showcase-card">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Integration Guide</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <h3 class="font-semibold text-slate-700 mb-2">Step 1: Load Template Tags</h3>
+                <div class="code-block">{% raw %}{% load avatar_tags %}{% endraw %}</div>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold text-slate-700 mb-2">Step 2: Use Avatar Tag</h3>
+                <div class="code-block">{% raw %}{% user_avatar user size="md" %}{% endraw %}</div>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold text-slate-700 mb-2">Step 3: Optional - Show Name</h3>
+                <div class="code-block">{% raw %}{% user_avatar user size="md" show_name=True %}{% endraw %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <div class="showcase-card">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Features</h2>
+        <ul class="space-y-3">
+            <li class="flex items-start gap-3">
+                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                <div>
+                    <p class="font-medium text-slate-900">Profile Image Display</p>
+                    <p class="text-slate-600 text-sm">Shows uploaded student profile pictures in circular containers</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                <div>
+                    <p class="font-medium text-slate-900">Letter Avatar Fallback</p>
+                    <p class="text-slate-600 text-sm">Displays first letter when no image is available (e.g., "P" for Paras)</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                <div>
+                    <p class="font-medium text-slate-900">Multiple Sizes</p>
+                    <p class="text-slate-600 text-sm">4 size options: sm (32px), md (48px), lg (64px), xl (96px)</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                <div>
+                    <p class="font-medium text-slate-900">Google-Style Colors</p>
+                    <p class="text-slate-600 text-sm">Uses Google's color palette for consistent, recognizable letters</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                <div>
+                    <p class="font-medium text-slate-900">Optional Name Display</p>
+                    <p class="text-slate-600 text-sm">Can show user's name and email next to avatar</p>
+                </div>
+            </li>
+            <li class="flex items-start gap-3">
+                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                <div>
+                    <p class="font-medium text-slate-900">Responsive Design</p>
+                    <p class="text-slate-600 text-sm">Works perfectly on all screen sizes and devices</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+</div>
+{% endblock %}
