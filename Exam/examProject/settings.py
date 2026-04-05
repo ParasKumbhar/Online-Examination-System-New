@@ -50,7 +50,10 @@ if not DEBUG:
     }
     # Set secure cookies
     SESSION_COOKIE_HTTPONLY = True
-    CSRF_COOKIE_HTTPONLY = True
+    # CSRF_COOKIE_HTTPONLY must remain False (the default) so that JavaScript
+    # can read the csrftoken cookie via document.cookie and include it in the
+    # X-CSRFToken request header for AJAX calls (e.g. /student/username-validate).
+    CSRF_COOKIE_HTTPONLY = False
 else:
     # Development settings
     SESSION_COOKIE_SECURE = False
@@ -299,8 +302,9 @@ if EMAIL_HOST_USER and not EMAIL_HOST_PASSWORD:
 
 # Logging for email
 
-# Cache configuration - LocMem for dev, Redis for production
-if DEBUG:
+# Cache configuration - LocMem for dev, Redis for production (only when REDIS_URL is set)
+REDIS_URL = os.environ.get("REDIS_URL")
+if DEBUG or not REDIS_URL:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -311,7 +315,7 @@ else:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
+            "LOCATION": REDIS_URL,
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             }
