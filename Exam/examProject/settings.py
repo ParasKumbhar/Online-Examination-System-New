@@ -38,8 +38,8 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,testserver,
 
 # Security Settings for Production
 if not DEBUG:
-    # Enforce HTTPS
-    SECURE_SSL_REDIRECT = True
+    # Railway handles HTTPS at the load balancer, so we don't need to redirect
+    SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
