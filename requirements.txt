@@ -24,3 +24,4 @@ gunicorn
 whitenoise
 dj-database-url
 psycopg[binary]
+django-redis
