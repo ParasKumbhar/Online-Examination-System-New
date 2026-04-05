@@ -6,6 +6,7 @@ Security hardened for production.
 from pathlib import Path
 import os
 from django.contrib import messages
+import dj_database_url
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
 # Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,12 +75,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'examProject.wsgi.application'
 
-# Database Configuration (SQLite for development)
+# Database Configuration (SQLite for development or DATABASE_URL)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(
+        os.environ.get('DATABASE_URL', f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+        conn_max_age=600,
+        ssl_require=not DEBUG,
+    )
 }
 
 # Password Validation
@@ -111,6 +114,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'examProject/static')
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media Files
 MEDIA_ROOT = MEDIA_DIR
