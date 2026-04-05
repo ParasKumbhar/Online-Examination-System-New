@@ -143,11 +143,6 @@ class Command(BaseCommand):
                 ('delete_sturesults_db', 'student'),
                 ('view_sturesults_db', 'student'),
                 
-                ('add_focusevent', 'student'),
-                ('change_focusevent', 'student'),
-                ('delete_focusevent', 'student'),
-                ('view_focusevent', 'student'),
-                
                 # ===== QUESTIONS APP - View only =====
                 ('view_question_db', 'questions'),
                 ('view_question_paper', 'questions'),
@@ -158,6 +153,8 @@ class Command(BaseCommand):
                 ('view_questionstatistics', 'questions'),
                 ('view_examassignment', 'questions'),
                 ('view_examsession', 'questions'),
+                
+                ('view_focuslossevent', 'questions'),
                 
                 # ===== COURSE APP - View only =====
                 ('view_course', 'course'),
@@ -205,6 +202,11 @@ class Command(BaseCommand):
             # Add permissions to group
             permissions_to_add = []
             for perm_codename, app_label in permissions:
+                if not ContentType.objects.filter(app_label=app_label).exists():
+                    # App not migrated yet; skip silently and let later post_migrate
+                    # calls assign these permissions once the app is ready.
+                    continue
+
                 try:
                     permission = Permission.objects.get(
                         codename=perm_codename,

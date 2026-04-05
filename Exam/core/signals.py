@@ -6,12 +6,30 @@ from django.core.management import call_command
 @receiver(post_migrate)
 def create_default_groups(sender, **kwargs):
     """
-    Automatically create default groups (Professor and Student) after migrations.
-    This signal runs whenever 'python manage.py migrate' is executed.
+    Keep default groups synchronized after migrations for apps that own
+    the configured permissions.
     """
-    # Only run for the core app's migrations
-    if sender.name == 'core':
-        try:
-            call_command('create_groups', verbosity=1)
-        except Exception as e:
-            print(f"Error creating groups: {str(e)}")
+    if kwargs.get('raw', False):
+        return
+
+    relevant_apps = {
+        'core',
+        'questions',
+        'faculty',
+        'course',
+        'resultprocessing',
+        'notifications',
+        'student',
+        'studentPreferences',
+        'tuition',
+        'auth',
+        'contenttypes',
+    }
+
+    if sender.name not in relevant_apps:
+        return
+
+    try:
+        call_command('create_groups', verbosity=0)
+    except Exception as e:
+        print(f"Error creating groups: {str(e)}")
