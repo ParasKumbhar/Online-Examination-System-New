@@ -3,7 +3,7 @@
 <div class="flex items-center gap-3">
     <!-- Avatar Circle -->
     <div class="relative inline-flex items-center justify-center rounded-full font-semibold text-white flex-shrink-0 {{ size_classes.wrapper }}" 
-         style="background-color: {{ color }};"
+         style="--avatar-bg: {{ color }}; background-color: var(--avatar-bg);"
          title="{{ display_name }}">
         
         {% if profile_pic %}
