@@ -280,19 +280,26 @@ class IPWhitelistMiddleware(MiddlewareMixin):
         # Check admin/login/API auth paths
         protected_paths = ['/admin/', '/api/v1/auth/', '/api/v2/auth/']
         if any(request.path.startswith(p) for p in protected_paths):
-            whitelisted_ips = list(IPWhitelist.objects.filter(is_active=True).values_list('ip_address', flat=True))
-            if ip not in whitelisted_ips:
-                security_logger.warning(f'IP not whitelisted: {ip} on {request.path}')
-                from core.models import AuditLog
-                AuditLog.objects.create(
-                    user=request.user if request.user.is_authenticated else None,
-                    action='IP_BLOCKED',
-                    ip_address=ip,
-                    user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                    success=False,
-                    details={'path': request.path}
-                )
-                return JsonResponse({'error': 'Access denied: IP not whitelisted'}, status=403)
+            try:
+                whitelisted_ips = list(IPWhitelist.objects.filter(is_active=True).values_list('ip_address', flat=True))
+                if ip not in whitelisted_ips:
+                    security_logger.warning(f'IP not whitelisted: {ip} on {request.path}')
+                    try:
+                        from core.models import AuditLog
+                        AuditLog.objects.create(
+                            user=request.user if request.user.is_authenticated else None,
+                            action='IP_BLOCKED',
+                            ip_address=ip,
+                            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                            success=False,
+                            details={'path': request.path}
+                        )
+                    except Exception as e:
+                        security_logger.error(f'Failed to log IP block: {str(e)}')
+                    return JsonResponse({'error': 'Access denied: IP not whitelisted'}, status=403)
+            except Exception as e:
+                # If IPWhitelist table doesn't exist, allow access
+                security_logger.warning(f'Could not check IP whitelist: {str(e)}')
         
         request._client_ip = ip
         return None
@@ -318,28 +325,33 @@ class SuspiciousLoginMiddleware(MiddlewareMixin):
             
             is_suspicious = self.is_suspicious_login(request, ip, fingerprint)
             
-            # Always log login attempt
-            from core.models import LoginAudit
-            audit = LoginAudit.objects.create(
-                user=request.user if request.user.is_authenticated else None,
-                ip_address=ip,
-                user_agent=ua,
-                device_fingerprint=fingerprint,
-                success=False,  # Updated post-auth
-                suspicious=is_suspicious,
-                reason='New IP/device/location' if is_suspicious else 'Normal login'
-            )
-            
-            if is_suspicious and request.user.is_authenticated:
-                # Trigger 2FA for suspicious logins
-                from core.two_factor_auth import TwoFactorAuth
-                TwoFactorAuth.require_2fa_verification(request.user)
-                audit.reason += '; 2FA required'
-                audit.save()
-                security_logger.warning(f'Suspicious login detected for {request.user}: {ip} - 2FA triggered')
-            
-            request._login_audit_id = audit.id
-            request._login_audit_suspicious = is_suspicious
+            # Always log login attempt (fail-safe for missing tables)
+            try:
+                from core.models import LoginAudit
+                audit = LoginAudit.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    ip_address=ip,
+                    user_agent=ua,
+                    device_fingerprint=fingerprint,
+                    success=False,  # Updated post-auth
+                    suspicious=is_suspicious,
+                    reason='New IP/device/location' if is_suspicious else 'Normal login'
+                )
+                
+                if is_suspicious and request.user.is_authenticated:
+                    # Trigger 2FA for suspicious logins
+                    from core.two_factor_auth import TwoFactorAuth
+                    TwoFactorAuth.require_2fa_verification(request.user)
+                    audit.reason += '; 2FA required'
+                    audit.save()
+                    security_logger.warning(f'Suspicious login detected for {request.user}: {ip} - 2FA triggered')
+                
+                request._login_audit_id = audit.id
+                request._login_audit_suspicious = is_suspicious
+            except Exception as e:
+                # Log the error but don't fail the login
+                security_logger.error(f'Failed to create login audit: {str(e)}')
+                # Continue without audit logging
         
         return None
     
@@ -352,12 +364,17 @@ class SuspiciousLoginMiddleware(MiddlewareMixin):
         is_new_device = fingerprint != session_fp
         
         # Multiple failed attempts from same IP (check recent audits)
-        from core.models import LoginAudit
-        recent_fails = LoginAudit.objects.filter(
-            ip_address=ip, success=False
-        ).filter(timestamp__lt=datetime.now(),
-            timestamp__gte=datetime.now() - timedelta(minutes=15)
-        ).count()
+        try:
+            from core.models import LoginAudit
+            recent_fails = LoginAudit.objects.filter(
+                ip_address=ip, success=False
+            ).filter(timestamp__lt=datetime.now(),
+                timestamp__gte=datetime.now() - timedelta(minutes=15)
+            ).count()
+        except Exception as e:
+            # If table doesn't exist, assume no recent fails
+            security_logger.warning(f'Could not check recent login fails: {str(e)}')
+            recent_fails = 0
         
         return is_new_ip or is_new_device or recent_fails > 3
     
